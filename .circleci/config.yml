@@ -302,8 +302,9 @@ jobs:
             ansible-playbook -i inventory.txt deploy-backend.yml
   
       - undo_migrations
-    - destroy-environment:
-            workflow_id: "${CIRCLE_WORKFLOW_ID:0:7}"
+      - destroy-environment:
+          workflow_id: "${CIRCLE_WORKFLOW_ID:0:7}"
+          
 workflows:
   default:
     jobs:
