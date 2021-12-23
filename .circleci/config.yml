@@ -5,7 +5,6 @@ commands:
     description: Destroy backend and frontend cloudformation stacks given a workflow ID.
     parameters:
       workflow_id:
-        type: string
 
 jobs:
   build-frontend:
