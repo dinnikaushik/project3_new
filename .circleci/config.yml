@@ -152,7 +152,7 @@ jobs:
           command: |
                 SHIV_IP=$(aws ec2 describe-instances \
                   --query 'Reservations[*].Instances[*].PublicIpAddress' \
-                  --filters "Values=udapeople" \
+                  --filters "Name=tag:project,Values=udapeople" \
                   --output text)
                 
                  echo "http://$SHIV_IP:3030" > .circleci/outputs/link.txt 
@@ -236,7 +236,7 @@ jobs:
             command: |
              export SHIVS_IP=$(aws ec2 describe-instances \
                 --query 'Reservations[*].Instances[*].PublicIpAddress' \
-                --filters "Values=udapeople" \
+                --filters "Name=tag:project,Values=udapeople" \
                 --output text)
               echo $SHIVS_IP
               export API_URL="http://$SHIVS_IP:3030"
@@ -286,7 +286,7 @@ jobs:
           command: |
             SHIV_IP=$(aws ec2 describe-instances \
                   --query 'Reservations[*].Instances[*].PublicIpAddress' \
-                  --filters "Values=udapeople" \
+                  --filters "Name=tag:project,Values=udapeople" \
                   --output text)
                  echo "$SHIV_IP"
                  echo "[web]" > .circleci/ansible/inventory.txt
