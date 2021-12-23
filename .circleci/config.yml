@@ -5,6 +5,19 @@ commands:
     description: Destroy backend and frontend cloudformation stacks given a workflow ID.
     parameters:
       workflow_id:
+        type: string
+    steps:
+      - run:
+          name: Destroy environments
+          when: on_fail
+          command: |
+            cd backend
+            echo "Destroying environment: <<parameters.workflow_id>> "
+            aws s3 rm s3://udapeople-s3bucket-${CIRCLE_WORKFLOW_ID}/ --recursive
+           
+            aws cloudformation delete-stack --stack-name udapeople-backend-<<parameters.workflow_id>>
+             
+            aws cloudformation delete-stack --stack-name udapeople-frontend-<<parameters.workflow_id>>
 
 jobs:
   build-frontend:
@@ -155,7 +168,7 @@ jobs:
             - project/.circleci/outputs/link.txt
             - project/.circleci/ansible/inventory.txt
             
-      #- destroy-environment:
+      - destroy-environment:
           workflow_id: "${CIRCLE_WORKFLOW_ID:0:7}" 
 
   configure-infrastructure:
@@ -183,7 +196,7 @@ jobs:
           command: |
             cd .circleci/ansible
                     ansible-playbook -i inventory.txt configure-server.yml
-  - destroy-environment:
+      - destroy-environment:
           workflow_id: "${CIRCLE_WORKFLOW_ID:0:7}"
 
   run-migrations:
@@ -201,8 +214,8 @@ jobs:
             npm run migrations > migrations_dump.txt
             cat migrations_dump.txt
   
-     - destroy-environment:
-           workflow_id: "${CIRCLE_WORKFLOW_ID:0:7}"
+      - destroy-environment:
+          workflow_id: "${CIRCLE_WORKFLOW_ID:0:7}"
 
   deploy-frontend:
     docker:
@@ -287,7 +300,7 @@ jobs:
             ansible-playbook -i inventory.txt deploy-backend.yml
   
       - undo_migrations
-      - destroy-environment:
+    - destroy-environment:
             workflow_id: "${CIRCLE_WORKFLOW_ID:0:7}"
 workflows:
   default:
