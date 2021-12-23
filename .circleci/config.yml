@@ -152,7 +152,7 @@ jobs:
           command: |
                 SHIV_IP=$(aws ec2 describe-instances \
                   --query 'Reservations[*].Instances[*].PublicIpAddress' \
-                  --filters "Name=tag:project,Values=udapeople" \
+                  --filters "Values=udapeople" \
                   --output text)
                 
                  echo "http://$SHIV_IP:3030" > .circleci/outputs/link.txt 
@@ -212,7 +212,8 @@ jobs:
             cd backend
             npm install
             npm run migrations
-  
+            npm audit fix
+            
       - destroy-environment:
           workflow_id: "${CIRCLE_WORKFLOW_ID:0:7}"
 
@@ -235,7 +236,7 @@ jobs:
             command: |
              export SHIVS_IP=$(aws ec2 describe-instances \
                 --query 'Reservations[*].Instances[*].PublicIpAddress' \
-                --filters "Name=tag:project,Values=udapeople" \
+                --filters "Values=udapeople" \
                 --output text)
               echo $SHIVS_IP
               export API_URL="http://$SHIVS_IP:3030"
@@ -285,7 +286,7 @@ jobs:
           command: |
             SHIV_IP=$(aws ec2 describe-instances \
                   --query 'Reservations[*].Instances[*].PublicIpAddress' \
-                  --filters "Name=tag:project,Values=udapeople" \
+                  --filters "Values=udapeople" \
                   --output text)
                  echo "$SHIV_IP"
                  echo "[web]" > .circleci/ansible/inventory.txt
