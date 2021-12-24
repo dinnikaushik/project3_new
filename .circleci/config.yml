@@ -345,7 +345,7 @@ jobs:
                 --filters "Name=tag:project,Values=udapeople" \
                 --output text)
               echo $SHIVP_IP
-              API_URL="http://$SHIV_IP:3030"
+              API_URL="http://$SHIV_IP"
               echo API_URL=${API_URL}
               if curl  "${API_URL}/api/status" | grep "ok"
               then
@@ -368,7 +368,7 @@ jobs:
       - run:
           name: Package frontend app
           command: |
-            URL04="http://udapeople-${CIRCLE_WORKFLOW_ID:0:7}.s3-website.eu-east-1.amazonaws.com/#/employees"
+            URL04="http://udapeople-${CIRCLE_WORKFLOW_ID:0:7}.s3-website.eu-east-1.amazonaws.com/index.html"
             echo ${URL04}
             if curl -s ${URL04} | grep "Welcome"
             then
@@ -376,10 +376,6 @@ jobs:
             else
               return 1
             fi
-
-      - destroy-environment:
-          workflow_id: "${CIRCLE_WORKFLOW_ID:0:7}"
-      - undo_migrations
 
 workflows:
   default:
