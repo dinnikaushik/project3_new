@@ -340,12 +340,12 @@ jobs:
       - run:
           name: Test backend app.
           command: |
-            export SHIVP_IP=$(aws ec2 describe-instances \
+            export SHIV_IP=$(aws ec2 describe-instances \
                 --query 'Reservations[*].Instances[*].PublicIpAddress' \
                 --filters "Name=tag:project,Values=udapeople" \
                 --output text)
               echo $SHIVP_IP
-              API_URL="http://$SHIVP_IP:3030"
+              API_URL="http://$SHIV_IP:3030"
               echo API_URL=${API_URL}
               if curl  "${API_URL}/api/status" | grep "ok"
               then
@@ -353,10 +353,6 @@ jobs:
               else
               return 1
               fi
-
-      - destroy-environment:
-          workflow_id: "${CIRCLE_WORKFLOW_ID:0:7}"
-      - undo_migrations
 
   smoke_test_frontend:
     docker:
