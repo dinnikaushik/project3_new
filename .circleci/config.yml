@@ -358,7 +358,7 @@ jobs:
               fi
 
       - undo_migrations
-      - destroy_environment:
+      - destroy-environment:
           workflow_id: "${CIRCLE_WORKFLOW_ID:0:7}"
       
 
@@ -386,7 +386,7 @@ jobs:
             fi
 
       - undo_migrations
-      - destroy_environment:
+      - destroy-environment:
           workflow_id: "${CIRCLE_WORKFLOW_ID:0:7}"
 
 workflows:
