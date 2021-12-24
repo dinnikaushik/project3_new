@@ -417,6 +417,6 @@ workflows:
       - deploy-backend:
           requires: [run-migrations]
       - smoke_test_backend:
-          requires: [deploy_backend]
+          requires: [deploy-backend]
       - smoke_test_frontend:
-          requires: [deploy_frontend]
+          requires: [deploy-frontend]
