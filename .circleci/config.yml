@@ -23,7 +23,7 @@ commands:
           name: Revert migrations
           when: on_fail
           command: |
-            cd ~/project/backend
+            cd backend
             if [[ -f "~/project/.circleci/outputs/db_migration_success" ]]; then
               npm i
               npm run migration:revert
@@ -372,9 +372,9 @@ jobs:
             echo ${URL04}
             if curl -s ${URL04} | grep "Welcome"
             then
-            return 1
+              return 0
             else
-            return 1
+              return 1
             fi
 
       - destroy-environment:
