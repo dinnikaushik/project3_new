@@ -411,7 +411,6 @@ jobs:
             echo "oldworkflowID is ${oldworkflowID}"
             echo "current workflow ID is udapeople-${CIRCLE_WORKFLOW_ID:0:7}"
       - persist_to_workspace:
-            - persist_to_workspace:
           root: ~/
           paths:
             - project/oldworkflowID.txt      
