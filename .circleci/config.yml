@@ -326,7 +326,7 @@ jobs:
           workflow_id: "${CIRCLE_WORKFLOW_ID:0:7}"
       - undo_migrations
 
-  smoke_test_backend:
+  smoke-test-backend:
     docker:
       - image: python:3.7-alpine3.11
     steps:
@@ -357,7 +357,7 @@ jobs:
               return 1
               fi
 
-  smoke_test_frontend:
+  smoke-test:
     docker:
       - image: python:3.7-alpine3.11
     steps:
@@ -372,7 +372,7 @@ jobs:
             apk add --no-cache openssh-client
             pip3 install awscli
       - run:
-          name: Package frontend app
+          name: Package frontend app after smoke test
           command: |
             URL04="http://udapeople-${CIRCLE_WORKFLOW_ID:0:7}.s3-website.us-east-1.amazonaws.com/index.html"
             echo ${URL04}
@@ -424,6 +424,43 @@ jobs:
           workflow_id: "${CIRCLE_WORKFLOW_ID:0:7}"
       - undo_migrations
 
+  cleanup:
+    docker:
+      - image: amazon/aws-cli
+    steps:
+      # Checkout code from git
+      - checkout
+      - run:
+          name: Install needed os utilities
+          command: yum install -y tar gzip curl
+      - attach_workspace:
+          at: ~/
+      - run:
+          name: dependencies for destroy
+          command: |
+            curl -sL https://rpm.nodesource.com/setup_10.x | bash -
+            yum install -y nodejs      
+            npm --version
+      - run:
+          name: Remove old stacks 
+          working_directory: ./.circleci
+          command: |
+            export oldworkflowID=$(<~/project/oldworkflowID.txt)
+            echo "oldworkflowID is ${oldworkflowID}"
+            export STACKS=($(aws cloudformation list-stacks --query "StackSummaries[*].StackName" \
+              --stack-status-filter CREATE_COMPLETE --no-paginate --output text)) 
+            
+            echo "Stack names ${STACKS[@]}"  
+            if [[ "${STACKS[@]}" =~ "${oldWorkflowID}" ]]
+            then
+              echo "deleting old versions"       
+              aws s3 rm "s3://udapeople-${oldworkflowID}" --recursive
+              aws cloudformation delete-stack --stack-name "udapeople-frontend-${oldworkflowID}"
+              aws cloudformation delete-stack --stack-name "udapeople-backend-${oldworkflowID}"
+            else
+              echo "Nothing to clean up"
+            fi 
+
 workflows:
   default:
     jobs:
@@ -451,9 +488,11 @@ workflows:
          requires: [run-migrations]
       - deploy-backend:
           requires: [run-migrations]
-      #- smoke_test_backend:
+      #- smoke-test-backend:
        #   requires: [deploy-backend]
-      - smoke_test_frontend:
+      - smoke-test:
           requires: [deploy-frontend]
       - cloudfront-update:
-          requires: [smoke_test_frontend]
+          requires: [smoke-test]
+      - cleanup:
+          requires: [cloudfront-update]    
