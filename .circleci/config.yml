@@ -328,7 +328,8 @@ jobs:
 
   smoke-test-backend:
     docker:
-      - image: python:3.7-alpine3.11
+      - image: python:3.9.0-alpine
+    #  - image: python:3.7-alpine3.11
     steps:
       - attach_workspace:
           at: ~/
@@ -343,19 +344,19 @@ jobs:
       - run:
           name: Test backend app.
           command: |
-            export SHIV_IP=$(aws ec2 describe-instances \
-                --query 'Reservations[*].Instances[*].PublicIpAddress' \
-                --filters "Name=tag:project,Values=udapeople" \
-                --output text)
-              echo $SHIVP_IP
-            export API_URL="http://$SHIV_IP:3030"
-              echo API_URL=${API_URL}
-              if curl  "${API_URL}" | grep "ok"
-              then
-              return 0
-              else
-              return 1
-              fi
+            export BACKEND_IP=$(aws ec2 describe-instances \
+              --filters "Name=tag:project,Values=udapeople-backend-${CIRCLE_WORKFLOW_ID:0:7}" \
+              --query "Reservations[*].Instances[*].PublicIpAddress" --output text)
+            echo "${BACKEND_IP}"
+            
+            export API_URL="http://${BACKEND_IP}:3030"
+            echo "${API_URL}"
+            if curl "${API_URL}/api/status" | grep "ok"
+            then
+                return 0
+            else
+                return 1
+            fi
 
   smoke-test:
     docker:
@@ -374,7 +375,7 @@ jobs:
       - run:
           name: Package frontend app after smoke test
           command: |
-            URL04="http://udapeople-${CIRCLE_WORKFLOW_ID:0:7}.s3-website.us-east-1.amazonaws.com/index.html"
+            URL04="http://udapeople-${CIRCLE_WORKFLOW_ID:0:7}.s3-website-us-east-1.amazonaws.com/#/employees"
             echo ${URL04}
             if curl -s ${URL04} | grep "Welcome"
             then
@@ -488,8 +489,8 @@ workflows:
          requires: [run-migrations]
       - deploy-backend:
           requires: [run-migrations]
-      #- smoke-test-backend:
-       #   requires: [deploy-backend]
+      - smoke-test-backend:
+          requires: [deploy-backend]
       - smoke-test:
           requires: [deploy-frontend]
       - cloudfront-update:
