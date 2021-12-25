@@ -405,7 +405,7 @@ jobs:
             curl -sL https://rpm.nodesource.com/setup_10.x | bash -
             yum install -y nodejs      
             npm --version
-     - run:
+      - run:
           name: Update cloudfront distribution
           working_directory: ./.circleci
           command: |
