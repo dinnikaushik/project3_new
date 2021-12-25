@@ -383,15 +383,19 @@ jobs:
               return 1
             fi
 
+      - destroy-environment:    
+          workflow_id: "${CIRCLE_WORKFLOW_ID:0:7}"
+      - undo_migrations
+
   cloudfront-update:
     docker:
       - image: amazon/aws-cli
     steps:
-      # Checkout code from git
+      Checkout code from git
       - checkout
       - run:
-          name: Install needed os utilities
-          command: yum install -y tar gzip curl
+         name: Install needed os utilities
+        command: yum install -y tar gzip curl
       - attach_workspace:
           at: ~/
       - run:
@@ -400,7 +404,7 @@ jobs:
             curl -sL https://rpm.nodesource.com/setup_10.x | bash -
             yum install -y nodejs      
             npm --version
-      - run:
+     - run:
           name: Update cloudfront distribution
           working_directory: ./.circleci
           command: |
