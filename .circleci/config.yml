@@ -222,8 +222,12 @@ jobs:
       - image: circleci/node:13.8.0
     steps:
       - checkout
+      - aws-cli/setup
       - restore_cache:
-            keys: [backend-build]           
+            keys: [backend-build]   
+      - attach_workspace:
+            at: ~/
+
       - run:
           name: Run migrations
           command : |
@@ -242,13 +246,12 @@ jobs:
 
             cd backend
             npm install
-            npm run migrations >> migration_output.txt
-            cat migration_output.txt
+            npm run migrations >> migrations_dump.txt
 
             echo
-            cat migrations_output.txt
+            cat migrations_dump.txt
             echo
-            pwd migrations_output.txt
+            pwd migrations_dump.txt
             echo
           no_output_timeout: 30m 
 
@@ -256,17 +259,18 @@ jobs:
           name: Store migration result in a file.
           command: |
             cd backend
-            if grep -q "has been executed successfully."
+            if grep -q "has been executed successfully." migrations_dump.txt
             then
-              touch ~/project/.circleci/outputs/migration_output.txt
+              touch ~/project/.circleci/backend/migrations_dump.txt
             fi
       - persist_to_workspace:
           root: ~/
           paths:
-            - project/.circleci/outputs/migration_output.txt
-            
+            - project/.circleci/backend/migrations_dump.txt
+     
       - destroy-environment:
           workflow_id: "${CIRCLE_WORKFLOW_ID:0:7}"
+      - undo_migrations
 
   deploy-frontend:
     docker:
@@ -315,7 +319,8 @@ jobs:
 
   deploy-backend:
     docker:
-      - image: python:3.7-alpine3.11
+      - image: python:3.9.0-alpine
+    #  - image: python:3.7-alpine3.11
   
     steps:
       - checkout
