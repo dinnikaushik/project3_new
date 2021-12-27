@@ -1,20 +1,29 @@
 version: 2.1
 
+orbs: 
+  slack: circleci/slack@4.4.4
+  aws-cli: circleci/aws-cli@2.0.3
+
 commands:
   destroy-environment:
     description: Destroy backend and frontend cloudformation stacks given a workflow ID.
     parameters:
       workflow_id:
         type: string
+
     steps:
       - run:
           name: Destroy environments
           when: on_fail
           command: |
-            echo "Destroying environment: <<parameters.workflow_id>> "
-            aws s3 rm s3://udapeople-<<parameters.workflow_id>> --recursive
-            aws cloudformation delete-stack --stack-name udapeople-backend-<<parameters.workflow_id>>
-            aws cloudformation delete-stack --stack-name udapeople-frontend-<<parameters.workflow_id>>
+            aws cloudformation delete-stack --stack-name udapeople-backend-${CIRCLE_WORKFLOW_ID:0:7}
+            aws cloudformation delete-stack --stack-name updapeople-frontend-${CIRCLE_WORKFLOW_ID:0:7}
+      - run:
+          name: Delete s3 bucket
+          when: on_fail
+          command: |
+            aws s3 rb s3://udapeople-${CIRCLE_WORKFLOW_ID:0:7} --force
+            exit 0
 
   undo_migrations:
     description: Revert the last migration if successfully run in the current workflow.
@@ -247,14 +256,14 @@ jobs:
           name: Store migration result in a file.
           command: |
             cd backend
-            if grep -q "has been executed successfully." migration_output.txt
+            if grep -q "has been executed successfully."
             then
-              touch ~/project/.circleci/outputs/db_migration_success
+              touch ~/project/.circleci/outputs/migration_output.txt
             fi
       - persist_to_workspace:
           root: ~/
           paths:
-            - project/.circleci/outputs/
+            - project/.circleci/outputs/migration_output.txt
             
       - destroy-environment:
           workflow_id: "${CIRCLE_WORKFLOW_ID:0:7}"
