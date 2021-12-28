@@ -133,7 +133,7 @@ workflows:
           requires: [build-backend]
       - scan-backend:
           requires: [build-backend]
-          context: #training
+          context: CircleCI
       - scan-frontend:
           requires: [build-frontend]
-          context: #training
+          context: CircleCI
