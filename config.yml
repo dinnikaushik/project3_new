@@ -1,4 +1,6 @@
 version: 2.1
+orbs: 
+  slack: circleci/slack@4.5.1
 
 jobs:
   build-frontend:
@@ -50,6 +52,9 @@ jobs:
             cd frontend
             npm install
             npm run test
+      - save_cache:
+          paths: [frontend/node_modules]
+          key: frontend-build
                 
   test-backend:
     docker:
@@ -65,6 +70,57 @@ jobs:
             cd backend
             npm install
             npm run test
+      - save_cache:
+          paths: [backend/node_modules]
+          key: backend-build
+
+  scan-frontend:
+    docker:
+      - image: circleci/node:13.8.0
+    steps:
+      - checkout
+      - restore_cache:
+          paths: [frontend/node_modules]
+          key: frontend-build
+      - run:
+          name: scan front-end
+          command: |
+            cd frontend
+            npm install
+            npm audit fix --audit-level=critical --force
+            npm audit --audit-level=critical
+          #  exit 1
+      - slack/notify:
+          event: fail
+          template: basic_fail_1
+      - slack/notify:
+          event: pass
+          mentions: 'Slack Success'
+          template: success_tagged_deploy_1
+
+  scan-backend:
+    docker:
+      - image: circleci/node:13.8.0
+    steps:
+      - checkout
+      - restore_cache:
+          paths: [backend/node_modules]
+          key: backend-build
+      - run:
+          name: scan back-end
+          command: |
+            cd backend
+            npm install
+            npm audit fix --audit-level=critical --force
+            npm audit --audit-level=critical
+          #  exit 1
+      - slack/notify:
+          event: fail
+          template: basic_fail_1
+      - slack/notify:
+          event: pass
+          mentions: 'Slack Success'
+          template: success_tagged_deploy_1
 
 workflows:
   default:
@@ -75,3 +131,9 @@ workflows:
           requires: [build-frontend]
       - test-backend:
           requires: [build-backend]
+      - scan-backend:
+          requires: [build-backend]
+          context: #training
+      - scan-frontend:
+          requires: [build-frontend]
+          context: #training
