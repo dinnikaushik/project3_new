@@ -93,6 +93,10 @@ jobs:
       - slack/notify:
           event: fail
           template: basic_fail_1
+      - slack/notify:
+          event: pass
+          mentions: 'Slack Success'
+          template: success_tagged_deploy_1
 
   scan-backend:
     docker:
@@ -113,6 +117,10 @@ jobs:
       - slack/notify:
           event: fail
           template: basic_fail_1
+      - slack/notify:
+          event: pass
+          mentions: 'Slack Success'
+          template: success_tagged_deploy_1
 
 workflows:
   default:
@@ -125,7 +133,7 @@ workflows:
           requires: [build-backend]
       - scan-backend:
           requires: [build-backend]
-          context: slack-secrets
+          context: #training
       - scan-frontend:
           requires: [build-frontend]
-          context: slack-secrets
+          context: #training
