@@ -143,6 +143,11 @@ jobs:
     steps:
       - checkout 
       - run:
+          name: Install Tar & gzip
+          command: |
+            apt-get install tar
+            apt-get install gzip 
+      - run:
           name: Ensure back-end infrastructure exists
           command: |
             aws cloudformation deploy \
@@ -170,7 +175,7 @@ jobs:
             echo [all] > inventory.txt
             aws ec2 describe-instances \
             --query 'Reservations[*].Instances[*].PublicIpAddress' \
-            --filters "Name=tag:project,Values=udapeople" \
+            --filters "Name=tags:project,Values=udapeople" \
             --output text >> inventory.txt
 
           #  exit 1
