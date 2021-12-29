@@ -176,7 +176,7 @@ jobs:
             --query 'Reservations[*].Instances[*].PublicIpAddress' \
             --filters "Name=tag:project,Values=udapeople" \
             --output text >> .circleci/ansible/temp.txt 
-            cp temp.txt inventory.txt
+            cp .circleci/ansible/temp.txt .circleci/ansible/inventory.txt
 
           #  exit 1
       - persist_to_workspace:
