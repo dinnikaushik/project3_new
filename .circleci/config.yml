@@ -177,7 +177,7 @@ jobs:
             --filters "Name=tag:project,Values=udapeople" \
             --output text >> .circleci/ansible/temp.txt 
             cp .circleci/ansible/temp.txt .circleci/ansible/inventory.txt
-
+            cat .circleci/ansible/temp.txt
           #  exit 1
       - persist_to_workspace:
           root: ~/
