@@ -145,8 +145,8 @@ jobs:
       - run:
           name: Install Tar & gzip
           command: |
-            apt-get install tar
-            apt-get install gzip 
+            yum install tar
+            yum install gzip 
       - run:
           name: Ensure back-end infrastructure exists
           command: |
@@ -171,7 +171,6 @@ jobs:
           name: Add back-end ip to ansible inventory
           command: |
             cd .circleci/ansible
-            touch inventory.txt
             echo [all] > inventory.txt
             aws ec2 describe-instances \
             --query 'Reservations[*].Instances[*].PublicIpAddress' \
