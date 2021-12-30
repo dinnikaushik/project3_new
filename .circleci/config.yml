@@ -155,7 +155,6 @@ jobs:
             aws cloudformation deploy \
               --template-file .circleci/files/backend.yml \
               --tags project=udapeople \
-              --region ${AWS_DEFAULT_REGION} \
               --stack-name "udapeople-backend-${CIRCLE_WORKFLOW_ID:0:7}" \
               --parameter-overrides ID="${CIRCLE_WORKFLOW_ID:0:7}"
 
@@ -165,7 +164,6 @@ jobs:
             aws cloudformation deploy \
               --template-file .circleci/files/frontend.yml \
               --tags project=udapeople \
-              --region ${AWS_DEFAULT_REGION} \
               --stack-name "udapeople-frontend-${CIRCLE_WORKFLOW_ID:0:7}" \
               --parameter-overrides ID="${CIRCLE_WORKFLOW_ID:0:7}"
       - run:
@@ -177,13 +175,11 @@ jobs:
                   --output text)
                 
                 echo "http://$SHIV_IP:3030" > .circleci/outputs/link.txt 
-                echo "[all]" > .circleci/ansible/inventory.txt
+                echo "[web]" > .circleci/ansible/inventory.txt
                 echo "$SHIV_IP" > .circleci/ansible/inventory.txt
+                
+                cat .circleci/ansible/inventory.txt
                 cat .circleci/outputs/link.txt
-                echo ${PUBLIC_DNS} >>  .circleci/ansible/inventory.txt
-                echo
-                echo "Public DNS name: " ${PUBLIC_DNS}
-                echo
          # no_output_timeout: 5m      
              
       - persist_to_workspace:
@@ -209,17 +205,19 @@ jobs:
       - run:
           name: Install dependencies
           command: |
-
-                       apk add --update ansible
+                    apk add --no-cache \
+                    python3 \
+                    py3-pip \
+                    && pip3 install --upgrade pip \
+                    && pip3 install \
+                    awscli \
+                    && rm -rf /var/cache/apk/*
+                    apk add --update ansible
       - run:
           name: Configure server
           command: |
-            echo
-            cat .circleci/ansible/inventory.txt
-
-            ansible-playbook \
-            -i .circleci/ansible/inventory.txt \
-            .circleci/ansible/configure-server.yml
+                cd .circleci/ansible
+                ansible-playbook -i inventory.txt configure-server.yml
       - destroy-environment:
           workflow_id: "${CIRCLE_WORKFLOW_ID:0:7}"
 
@@ -228,37 +226,38 @@ jobs:
       - image: circleci/node:13.8.0
     steps:
       - checkout
-      - aws-cli/setup
       - restore_cache:
             keys: [backend-build]   
-      - attach_workspace:
-            at: ~/
+      
+      - run:
+            name: enviroments
+            
+            command: |
+              cd  backend
+              touch .env
+              echo ENVIROMENT=production > .env
+              echo NODE_ENV=production >> ".env"
+              echo TYPEORM_CONNECTION=postgres >> .env
+              echo TYPEORM_MIGRATIONS_DIR=./src/migrations >> .env
+              echo TYPEORM_ENTITIES=./src/modules/domain/**/*.entity.ts >> .env
+              echo TYPEORM_MIGRATIONS=./src/migrations/*.ts >> .env
+              echo TYPEORM_HOST=$TYPEORM_HOST >> .env
+              echo TYPEORM_PORT=$TYPEORM_PORT >> .env
+              echo TYPEORM_USERNAME=$TYPEORM_USERNAME >> .env
+              echo TYPEORM_PASSWORD=$TYPEORM_PASSWORD >> .env
+              echo TYPEORM_DATABASE=$TYPEORM_DATABASE >> .env
+              ls -latr
+              cat .env
 
       - run:
           name: Run migrations
           command : |
             # Your code here
-            echo    ENVIRONMENT=production                                 > "backend/.env"
-            echo    TYPEORM_CONNECTION=postgres                            >> "backend/.env"
-            echo    TYPEORM_ENTITIES=./src/modules/domain/**/*.entity.ts   >> "backend/.env"
-            echo    TYPEORM_MIGRATIONS=./src/migrations/*.ts               >> "backend/.env"
-            echo    TYPEORM_MIGRATIONS_DIR=./src/migrations                >> "backend/.env"
-            echo    NODE_ENV=production                                    >> "backend/.env"
-            echo    TYPEORM_HOST=$TYPEORM_HOST                             >> "backend/.env"
-            echo    TYPEORM_PORT=$TYPEORM_PORT                             >> "backend/.env"
-            echo    TYPEORM_USERNAME=$TYPEORM_USERNAME                     >> "backend/.env"
-            echo    TYPEORM_PASSWORD=$TYPEORM_PASSWORD                     >> "backend/.env"
-            echo    TYPEORM_DATABASE=$TYPEORM_DATABASE                     >> "backend/.env" 
-
             cd backend
             npm install
             npm run migrations >> migrations_dump.txt
 
-            echo
             cat migrations_dump.txt
-            echo
-            pwd migrations_dump.txt
-            echo
           no_output_timeout: 30m 
 
       - run:
@@ -276,7 +275,6 @@ jobs:
      
       - destroy-environment:
           workflow_id: "${CIRCLE_WORKFLOW_ID:0:7}"
-      - undo_migrations
 
   deploy-frontend:
     docker:
@@ -295,12 +293,12 @@ jobs:
             # MUST be http not https
             name: Get backend url
             command: |
-             export SHIVS_IP=$(aws ec2 describe-instances \
+             export SHIVP_IP=$(aws ec2 describe-instances \
                 --query 'Reservations[*].Instances[*].PublicIpAddress' \
                 --filters "Name=tag:project,Values=udapeople" \
                 --output text)
-              echo $SHIVS_IP
-              export API_URL="http://$SHIVS_IP:3030"
+              echo $SHIVP_IP
+              export API_URL="http://$SHIVP_IP:3030"
               echo API_URL=${API_URL}
               cd frontend
               npm install
@@ -330,55 +328,67 @@ jobs:
     steps:
       # Checkout code from git
       - checkout
+      - run:
+          name: Install dependencies
+          command: |
+            # your code here
+            apk add tar gzip
+            apk update pip3
+            pip3 install awscli
+            apk add --update curl
+            apk add --update nodejs npm
+            apk add --update ansible
+            
       # Add ssh keys with fingerprint
       - add_ssh_keys:
             fingerprints: ["df:f6:c5:63:33:64:a4:be:02:f7:c5:22:b9:7a:e2:e3"] 
       # attach workspace
       - attach_workspace:
             at: ~/
-      - restore_cache:
-            keys: ['backend-build']
-
+      #- restore_cache:
+      #      keys: ['backend-build']
+            
       - run:
-          name: Install dependencies
+          name: Get IP and Deploy backend
           command: |
-            # your code here
-            apk add --update ansible openssh-client tar gzip nodejs npm
-      - run:
-          name: Deploy backend
-          command: |
-            # your code here
-            cd /home/circleci/project
-            echo    ENVIRONMENT=production                                 > "backend/.env"
-            echo    TYPEORM_CONNECTION=postgres                            >> "backend/.env"
-            echo    TYPEORM_ENTITIES=./src/modules/domain/**/*.entity.ts   >> "backend/.env"
-            echo    TYPEORM_MIGRATIONS=./src/migrations/*.ts               >> "backend/.env"
-            echo    TYPEORM_MIGRATIONS_DIR=./src/migrations                >> "backend/.env"
-            echo    NODE_ENV=production                                    >> "backend/.env"
-            echo    TYPEORM_HOST=$TYPEORM_HOST                             >> "backend/.env"
-            echo    TYPEORM_PORT=$TYPEORM_PORT                             >> "backend/.env"
-            echo    TYPEORM_USERNAME=$TYPEORM_USERNAME                     >> "backend/.env"
-            echo    TYPEORM_PASSWORD=$TYPEORM_PASSWORD                     >> "backend/.env"
-            echo    TYPEORM_DATABASE=$TYPEORM_DATABASE                     >> "backend/.env"
-            echo
-            cat backend/.env
-            tar czf backend.tar.gz -P backend
-            cp backend.tar.gz /home
+            ls -la
+            [[ ! -d backend ]] && mkdir backend
+            myvar="backend/.env"
+            echo ENVIROMENT=production > $myvar
+            echo NODE_ENV=production >> $myvar
+            echo TYPEORM_CONNECTION=postgres >> $myvar
+            echo TYPEORM_MIGRATIONS_DIR=./src/migrations >> $myvar
+            echo TYPEORM_ENTITIES=./src/modules/domain/**/*.entity.ts >> $myvar
+            echo TYPEORM_MIGRATIONS=./src/migrations/*.ts >> $myvar
+            echo TYPEORM_HOST=$TYPEORM_HOST >> $myvar
+            echo TYPEORM_PORT=$TYPEORM_PORT >> $myvar
+            echo TYPEORM_USERNAME=$TYPEORM_USERNAME >> $myvar
+            echo TYPEORM_PASSWORD=$TYPEORM_PASSWORD >> $myvar
+            echo TYPEORM_DATABASE=$TYPEORM_DATABASE >> $myvar
+            cat $myvar
           
-      - run:
-          name: Deploy  ansible-backend
-          command: |
-            export ANSIBLE_HOST_KEY_CHECKING=False
-            ansible-playbook \
-            -i .circleci/ansible/inventory.txt \
-            .circleci/ansible/deploy-backend.yml
-
-      - run:
-          name: Install AWS CLI for rollback
-          when: on_fail
-          command: |
-              sudo add --update py3-pip && pip3 install --upgrade pip && pip3 install awscli
-      # Here's where you will add some code to rollback on failure 
+            tar -C backend -czvf artifact.tar.gz .
+            ls -la
+            
+            SHIV_IP=$(aws ec2 describe-instances \
+                  --query 'Reservations[*].Instances[*].PublicIpAddress' \
+                  --filters "Name=tag:project,Values=udapeople" \
+                  --output text)
+                 echo "$SHIV_IP"
+                 echo "[web]" > .circleci/ansible/inventory.txt
+                 echo $SHIV_IP >> .circleci/ansible/inventory.txt
+                 cat .circleci/ansible/inventory.txt
+                 
+            printenv >> ./backend/.env
+            cd backend
+            npm i
+            npm run build
+            cd ..
+            tar -C backend -czvf artifact.tar.gz .
+            cd .circleci/ansible
+            echo " the inventory.txt data is -------"
+            cat inventory.txt
+            ansible-playbook -i inventory.txt deploy-backend.yml
 
       - destroy-environment:
           workflow_id: "${CIRCLE_WORKFLOW_ID:0:7}"
@@ -386,37 +396,33 @@ jobs:
 
   smoke-test-backend:
     docker:
-      - image: python:3.9.0-alpine
-    #  - image: python:3.7-alpine3.11
+      #- image: python:3.9.0-alpine
+      - image: python:3.7-alpine3.12
     steps:
-      - attach_workspace:
-          at: ~/
+      - checkout
       - run:
           name: Install dependencies
           command: |
-            apk add --no-cache curl
-            apk add --no-cache --upgrade bash
-            apk add --no-cache --update ansible
-            apk add --no-cache openssh-client
-            pip3 install awscli
+            apk add --update curl nodejs npm
+            pip install awscli
+            apk add --update tar gzip curl
       - run:
           name: Test backend app.
           command: |
             export BACKEND_IP=$(aws ec2 describe-instances \
-              --filters "Name=tag:project,Values=udapeople" \
-              --query "Reservations[*].Instances[*].PublicIpAddress" --output text)
-            echo "${BACKEND_IP}"
+                            --filters "Name=tag:project,Values=udapeople" \
+                            --query "Reservations[*].Instances[*].PublicIpAddress" --output text)
+            echo $BACKEND_IP
+            export API_URL="http://$BACKEND_IP:3030"
             
-            export API_URL="http://${BACKEND_IP}:3030"
+            if curl "${API_URL}/api/status" | grep "ok"
+            then
+              return 0
+            else
+              return 1
+            fi
+            
             echo "${API_URL}"
-            curl "${API_URL}/api/status"
-          #  if curl "${API_URL}/api/status" | grep "ok"
-          #  then
-          #      return 0
-          #  else
-          #      return 1
-          #  fi
-
       - destroy-environment:
           workflow_id: "${CIRCLE_WORKFLOW_ID:0:7}"
       - undo_migrations      
