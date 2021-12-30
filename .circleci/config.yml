@@ -15,7 +15,7 @@ commands:
           command: |
             aws cloudformation delete-stack --stack-name "udapeople-frontend-${CIRCLE_WORKFLOW_ID:0:7}"
             aws cloudformation delete-stack --stack-name "udapeople-backend-${CIRCLE_WORKFLOW_ID:0:7}"
-            exit 1
+#            exit 1
 
 jobs:
   build-frontend:
@@ -193,8 +193,7 @@ jobs:
     steps:
       - checkout
       - add_ssh_keys:
-          fingerprints: ["35:41:20:7e:c1:7d:ff:27:54:6b:da:08:e2:6c:63:52"] 
-
+              fingerprints: ["35:41:20:7e:c1:7d:ff:27:54:6b:da:08:e2:6c:63:52"] 
       # attach workspace
       - attach_workspace:
         at: ~/
