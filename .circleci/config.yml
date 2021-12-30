@@ -200,8 +200,8 @@ jobs:
                 fingerprints: ["df:f6:c5:63:33:64:a4:be:02:f7:c5:22:b9:7a:e2:e3"]
       - attach_workspace:
                 at: ~/
-      - restore_cache:
-            keys: ['backend-build']
+      #- restore_cache:
+      #      keys: ['backend-build']
       - run:
           name: Install dependencies
           command: |
@@ -218,6 +218,12 @@ jobs:
           command: |
                 cd .circleci/ansible
                 ansible-playbook -i inventory.txt configure-server.yml
+      - run:
+              name: Configure node exporter 
+              command: |
+                    cd .circleci/ansible
+                    ansible-playbook -i inventory.txt nodex.yml
+                    
       - destroy-environment:
           workflow_id: "${CIRCLE_WORKFLOW_ID:0:7}"
 
@@ -412,17 +418,16 @@ jobs:
             export BACKEND_IP=$(aws ec2 describe-instances \
                             --filters "Name=tag:project,Values=udapeople" \
                             --query "Reservations[*].Instances[*].PublicIpAddress" --output text)
-            echo $BACKEND_IP
+            echo ${BACKEND_IP}
             export API_URL="http://$BACKEND_IP:3030"
-            
+            echo "${API_URL}"
             if curl "${API_URL}/api/status" | grep "ok"
             then
-              return 0
+              echo "Backend alive, Proceeding" 
             else
               return 1
             fi
             
-            echo "${API_URL}"
       - destroy-environment:
           workflow_id: "${CIRCLE_WORKFLOW_ID:0:7}"
       - undo_migrations      
