@@ -169,7 +169,7 @@ jobs:
           #  exit 1
       - run:
           name: Add back-end ip to ansible inventory
-          command:
+          command:  |
             echo [web] > .circleci/ansible/inventory.txt
             echo [web] > .circleci/ansible/temp.txt
             aws ec2 describe-instances \
