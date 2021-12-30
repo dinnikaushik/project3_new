@@ -267,7 +267,7 @@ jobs:
             cd backend
             if grep -q "has been executed successfully." migrations_dump.txt
             then
-              ~/project/backend/migrations_dump.txt
+              ~/project/.circleci/outputs/migration_output.txt
             fi
       - persist_to_workspace:
           root: ~/
@@ -556,7 +556,7 @@ workflows:
           requires: [deploy-backend]
       - smoke-test:
           requires: [deploy-frontend]
-      - cloudfront-update:
-          requires: [smoke-test]
-      - cleanup:
-          requires: [cloudfront-update]    
+      #- cloudfront-update:
+      #    requires: [smoke-test]
+      #- cleanup:
+      #    requires: [cloudfront-update]    
