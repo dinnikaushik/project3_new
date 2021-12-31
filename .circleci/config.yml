@@ -1,9 +1,5 @@
 version: 2.1
 
-orbs: 
-  slack: circleci/slack@4.4.4
-  aws-cli: circleci/aws-cli@2.0.3
-
 commands:
   destroy-environment:
     description: Destroy backend and frontend cloudformation stacks given a workflow ID.
@@ -45,7 +41,7 @@ jobs:
     steps:
       - checkout
       - restore_cache:
-          keys: [frontend-build]
+          keys: [v1-frontend-build]
       - run:
           name: Build front-end
           command: |
@@ -55,7 +51,7 @@ jobs:
             npm update
       - save_cache:
           paths: [frontend/node_modules]
-          key: frontend-build
+          key: v1-frontend-build
 
   build-backend:
     docker:
@@ -63,7 +59,7 @@ jobs:
     steps:
       - checkout
       - restore_cache:
-          keys: [backend-build]
+          keys: [v1-backend-build]
       - run:
           name: Build back-end
           command: |
@@ -72,7 +68,7 @@ jobs:
             npm run build
       - save_cache:
           paths: [backend/node_modules]
-          key: backend-build
+          key: v1-backend-build
 
   test-frontend:
     docker:
@@ -80,7 +76,7 @@ jobs:
     steps:
       - checkout
       - restore_cache:
-          keys: [frontend-test]
+          keys: [v1-frontend-test]
       - run:
           name: Run frontend test
           command: |
@@ -89,7 +85,7 @@ jobs:
             npm run test
       - save_cache:
           paths: [frontend/node_modules]
-          key: frontend-test
+          key: v1-frontend-test
 
   test-backend:
     docker:
@@ -97,7 +93,7 @@ jobs:
     steps:
       - checkout
       - restore_cache:
-          keys: [backend-test]
+          keys: [v1-backend-test]
       - run:
           name: Run backend test
           command: |
@@ -106,7 +102,7 @@ jobs:
             npm run test
       - save_cache:
           paths: [backend/node_modules]
-          key: backend-test
+          key: v1-backend-test
             
   scan-frontend:
     docker:
@@ -114,17 +110,17 @@ jobs:
     steps:
       - checkout
       - restore_cache:
-          keys: [frontend-scan]
+          keys: [v1-frontend-scan]
       - run:
           name: Run frontend scan
           command: |
             cd frontend
             npm install
             npm audit fix --audit-level=critical --force
-
+            npm audit --audit-level=critical
       - save_cache:
           paths: [frontend/node_modules]
-          key: frontend-scan 
+          key: v1-frontend-scan 
 
   scan-backend:
     docker:
@@ -132,16 +128,17 @@ jobs:
     steps:
       - checkout
       - restore_cache:
-           keys: [scan-backend]
+           keys: [v1-scan-backend]
       - run:
            name: Run scan-backend
            command: |
                  cd backend
                  npm install
                  npm audit fix --audit-level=critical --force
+                 npm audit --audit-level=critical
       - save_cache:
            paths: [backend/node_modules]
-           key: scan-backend
+           key: v1-scan-backend
 
   deploy-infrastructure:
     docker:
@@ -149,7 +146,7 @@ jobs:
     steps:
       - checkout
       - run:
-          name: Ensure back-end infrastructure exists
+          name: Install needed utilities and check backend exist 
           command: |
             yum install -y tar gzip
             aws cloudformation deploy \
@@ -167,7 +164,7 @@ jobs:
               --stack-name "udapeople-frontend-${CIRCLE_WORKFLOW_ID:0:7}" \
               --parameter-overrides ID="${CIRCLE_WORKFLOW_ID:0:7}"
       - run:
-          name: Add back-end ip to ansible inventory
+          name: Now Add back-end ip to ansible inventory file
           command: |
                 SHIV_IP=$(aws ec2 describe-instances \
                   --query 'Reservations[*].Instances[*].PublicIpAddress' \
@@ -193,7 +190,7 @@ jobs:
 
   configure-infrastructure:
     docker:
-      - image: python:3.7-alpine3.11
+      - image: python:3.9.0-alpine
     steps:
       - checkout
       - add_ssh_keys:
@@ -214,12 +211,12 @@ jobs:
                     && rm -rf /var/cache/apk/*
                     apk add --update ansible
       - run:
-          name: Configure server
+          name: Please start Configure server
           command: |
                 cd .circleci/ansible
                 ansible-playbook -i inventory.txt configure-server.yml
       - run:
-              name: Configure node exporter 
+              name: Configure node exporter for premethius
               command: |
                     cd .circleci/ansible
                     ansible-playbook -i inventory.txt nodex.yml
@@ -232,12 +229,12 @@ jobs:
       - image: circleci/node:13.8.0
     steps:
       - checkout
+      
       - restore_cache:
-            keys: [backend-build]   
+            keys: [v1-backend-build]   
       
       - run:
-            name: enviroments
-            
+            name: enviroments variable to backend
             command: |
               cd  backend
               touch .env
@@ -288,40 +285,53 @@ jobs:
 
     steps:
       - checkout
-      - run:
-            name: Install dependencies
-            command: |
-              sudo apt-get -y -qq update
-              sudo apt-get -qq install awscli
+      - restore_cache:
+          keys: [v1-frontend-build]
       - attach_workspace:
-            at: .    
+          at: ~/
       - run:
-            # MUST be http not https
+          name: Install AWS CLI dependenciess
+          working_directory: /tmp
+          command: |
+            sudo apt-get update
+            sudo apt install curl -y 
+            sudo apt install unzip
+            curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
+            unzip awscliv2.zip
+            sudo ./aws/install
+            /usr/local/bin/aws --version
+      - run:
+          name: Install required dependencies tar
+          command: sudo apt-get install -y tar gzip
+      - run:
+          name: Install required npm
+          command: |
+            pwd
+            cd frontend
+            pwd
+            ls -ltr
+            npm install
+      - run: 
             name: Get backend url
             command: |
              export SHIVP_IP=$(aws ec2 describe-instances \
                 --query 'Reservations[*].Instances[*].PublicIpAddress' \
                 --filters "Name=tag:project,Values=udapeople" \
                 --output text)
-              echo $SHIVP_IP
-              export API_URL="http://$SHIVP_IP:3030"
-              echo API_URL=${API_URL}
-              cd frontend
-              npm install
-              npm run build     
+             export API_URL="http://${SHIVP_IP}:3030"
+             echo "${API_URL}"
+             echo "${API_URL}" >> frontend/.env
+             cat frontend/.env
         
       - run:
             name: Deploy frontend objects
             command: |
               cd frontend
-              s3Buck=$(echo "udapeople-${CIRCLE_WORKFLOW_ID:0:7}")
-              aws s3 sync dist s3://$s3Buck/
-              URL02=("http://$s3Buck.s3-website-eu-east-1.amazonaws.com")
-
-      - persist_to_workspace:
-            root: .
-            paths:
-              - frontend/dist
+              export API_URL=$(cat .env)
+              echo "back end API_URL from .env is ${API_URL}"
+              npm run build
+              tar -czvf artifact-"${CIRCLE_WORKFLOW_ID:0:7}".tar.gz dist
+              aws s3 cp dist s3://udapeople-${CIRCLE_WORKFLOW_ID:0:7} --recursive
     
       - destroy-environment:
           workflow_id: "${CIRCLE_WORKFLOW_ID:0:7}"  
