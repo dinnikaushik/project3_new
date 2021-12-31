@@ -231,7 +231,7 @@ jobs:
             npm install
             npm audit fix 
             npm run migrations > migrations_dump.txt
-            cat migration.txt
+
           # Run and sve the migration output
             
             # Your code here
