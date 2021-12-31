@@ -220,7 +220,27 @@ jobs:
       - checkout 
       - restore_cache:
           keys: [backend-build]
-
+      
+      - run:
+            name: enviroments
+            
+            command: |
+              cd  backend
+              touch .env
+              echo ENVIROMENT=production > .env
+              echo NODE_ENV=production >> ".env"
+              echo TYPEORM_CONNECTION=postgres >> .env
+              echo TYPEORM_MIGRATIONS_DIR=./src/migrations >> .env
+              echo TYPEORM_ENTITIES=./src/modules/domain/**/*.entity.ts >> .env
+              echo TYPEORM_MIGRATIONS=./src/migrations/*.ts >> .env
+              echo TYPEORM_HOST=$TYPEORM_HOST >> .env
+              echo TYPEORM_PORT=$TYPEORM_PORT >> .env
+              echo TYPEORM_USERNAME=$TYPEORM_USERNAME >> .env
+              echo TYPEORM_PASSWORD=$TYPEORM_PASSWORD >> .env
+              echo TYPEORM_DATABASE=$TYPEORM_DATABASE >> .env
+              ls -latr
+              cat .env
+      
       - attach_workspace:
             at: ~/
       # Checkout code from git
@@ -231,7 +251,6 @@ jobs:
             npm install
             npm audit fix 
             npm run migrations > migrations_dump.txt
-
           # Run and sve the migration output
             
             # Your code here
@@ -241,7 +260,7 @@ jobs:
           command: |
             if grep -q "has been executed successfully." ~/project/backend/migrations_dump.txt
               then
-                ~/project/backend/migrations_dump.txt
+                ~/project/temp/migrations_output.txt
             fi
 #              curl -H "Content-Type: text/plain" -H "token: 7933fe63-4687-4fa1-8426-aa25aa1730ec" --request PUT --data "1" https://api.memstash.io/values/migration_${CIRCLE_WORKFLOW_ID:0:7}
 #            fi
