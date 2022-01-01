@@ -263,18 +263,18 @@ jobs:
             cat migrations_dump.txt
           no_output_timeout: 30m 
 
-      - run:
-          name: Store migration result in a file.
-          command: |
-            cd backend
-            if grep -q "has been executed successfully." migrations_dump.txt
-            then
-              ~/project/outputs/migration_output.txt
-            fi
-      - persist_to_workspace:
-          root: ~/
-          paths:
-            - project/.circleci/outputs/migration_output.txt
+      #- run:
+      #    name: Store migration result in a file.
+      #    command: |
+      #      cd backend
+      #      if grep -q "has been executed successfully." migrations_dump.txt
+      #      then
+      #        ~/project/outputs/migration_output.txt
+      #      fi
+      #- persist_to_workspace:
+      #    root: ~/
+      #    paths:
+      #     - project/.circleci/outputs/migration_output.txt
      
       - destroy-environment:
           workflow_id: "${CIRCLE_WORKFLOW_ID:0:7}"
