@@ -261,19 +261,6 @@ jobs:
            
             cat migrations_dump.txt
           no_output_timeout: 30m 
-
-      #- run:
-      #    name: Send migration result in a file
-      #    command: |
-      #      if grep -q "has been executed successfully." ~/project/backend/migrations_dump.txt
-      #      then
-      #        echo "migration is completed."
-      #      fi
-      #      cd backend
-      #- persist_to_workspace:
-      #    root: ~/
-      #    paths:
-      #     - project/.circleci/outputs/migration_output.txt
      
       - destroy-environment:
           workflow_id: "${CIRCLE_WORKFLOW_ID:0:7}"
