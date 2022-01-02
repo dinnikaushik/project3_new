@@ -19,8 +19,9 @@
   become: yes
   shell: |
    # cd ~/backend
-    tar -vxf artifact.tar.gz
     pwd
+    tar -vxf artifact.tar.gz
+   
     
 #- name: "update apt package."
 #  become: yes
