@@ -51,7 +51,7 @@
     state: present
 
 - name: Executing node
-  become: true
+  become: yes
   shell: |
     cd /home/ubuntu/backend
     npm install
