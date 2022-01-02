@@ -354,9 +354,9 @@ jobs:
             root: .
             paths:
               - frontend/dist
-      - undo_migrations              
-      - destroy-environment:
-          workflow_id: "${CIRCLE_WORKFLOW_ID:0:7}"  
+      #- undo_migrations              
+      #- destroy-environment:
+      #    workflow_id: "${CIRCLE_WORKFLOW_ID:0:7}"  
 
 
   deploy-backend:
@@ -431,9 +431,9 @@ jobs:
             #cat inventory.txt
             #ansible-playbook -i inventory.txt deploy-backend.yml
 
-      - undo_migrations            
-      - destroy-environment:
-          workflow_id: "${CIRCLE_WORKFLOW_ID:0:7}"
+      #- undo_migrations            
+      #- destroy-environment:
+      #    workflow_id: "${CIRCLE_WORKFLOW_ID:0:7}"
 
 
   smoke-test-backend:
