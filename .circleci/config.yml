@@ -171,18 +171,15 @@ jobs:
                   --filters "Name=tag:project,Values=udapeople" \
                   --output text)
                 
-                echo "http://$SHIV_IP:3030" > .circleci/outputs/link.txt 
                 echo "[web]" > .circleci/ansible/inventory.txt
                 echo "$SHIV_IP" > .circleci/ansible/inventory.txt
                 
                 cat .circleci/ansible/inventory.txt
-                cat .circleci/outputs/link.txt
          # no_output_timeout: 5m      
              
       - persist_to_workspace:
           root: ~/
           paths:
-            - project/.circleci/outputs/link.txt
             - project/.circleci/ansible/inventory.txt
             
       - destroy-environment:
@@ -190,15 +187,14 @@ jobs:
 
   configure-infrastructure:
     docker:
-      - image: python:3.9.0-alpine
+      - image: python:3.7-alpine3.11
     steps:
       - checkout
       - add_ssh_keys:
                 fingerprints: ["fb:65:09:40:01:ee:f6:16:90:00:3f:cf:1c:19:11:5e"]
       - attach_workspace:
                 at: ~/
-      #- restore_cache:
-      #      keys: ['backend-build']
+    
       - run:
           name: Install dependencies
           command: |
@@ -229,7 +225,6 @@ jobs:
       - image: circleci/node:13.8.0
     steps:
       - checkout
-      
       - restore_cache:
             keys: [v1-backend-build]   
       
@@ -258,19 +253,19 @@ jobs:
             # Your code here
             cd backend
             npm install
-            npm run migrations >> migrations_dump.txt
-
+            npm run migrations > migrations_dump.txt
+           
             cat migrations_dump.txt
           no_output_timeout: 30m 
 
-      #- run:
-      #    name: Store migration result in a file.
-      #    command: |
+      - run:
+          name: Store migration result in a file.
+          command: |
       #      cd backend
-      #      if grep -q "has been executed successfully." migrations_dump.txt
-      #      then
-      #        ~/project/outputs/migration_output.txt
-      #      fi
+            if grep -q "has been executed successfully." ~/project/backend/migrations_dump.txt
+            then
+              echo "migration is completed."
+            fi
       #- persist_to_workspace:
       #    root: ~/
       #    paths:
@@ -285,32 +280,39 @@ jobs:
 
     steps:
       - checkout
-      - restore_cache:
-          keys: [v1-frontend-build]
+      - run:
+            name: Install dependencies
+            command: |
+              sudo apt-get -y -qq update
+              sudo apt-get -qq install awscli
       - attach_workspace:
-          at: ~/
-      - run:
-          name: Install AWS CLI dependenciess
-          working_directory: /tmp
-          command: |
-            sudo apt-get update
-            sudo apt install curl -y 
-            sudo apt install unzip
-            curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
-            unzip awscliv2.zip
-            sudo ./aws/install
-            /usr/local/bin/aws --version
-      - run:
-          name: Install required dependencies tar
-          command: sudo apt-get install -y tar gzip
-      - run:
-          name: Install required npm
-          command: |
-            pwd
-            cd frontend
-            pwd
-            ls -ltr
-            npm install
+            at: . 
+      #- restore_cache:
+      #    keys: [v1-frontend-build]
+      #- attach_workspace:
+      #    at: ~/
+      #- run:
+       #   name: Install AWS CLI dependenciess
+       #   working_directory: /tmp
+       #   command: |
+       #     sudo apt-get update
+       #     sudo apt install curl -y 
+       #     sudo apt install unzip
+       #     curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
+       #     unzip awscliv2.zip
+       #     sudo ./aws/install
+       #     /usr/local/bin/aws --version
+      #- run:
+      #    name: Install required dependencies tar
+      #    command: sudo apt-get install -y tar gzip
+      #- run:
+      #    name: Install required npm
+      #    command: |
+      #      pwd
+      #      cd frontend
+      #      pwd
+      #      ls -ltr
+      #      npm install
       - run: 
             name: Get backend url
             command: |
@@ -318,21 +320,34 @@ jobs:
                 --query 'Reservations[*].Instances[*].PublicIpAddress' \
                 --filters "Name=tag:project,Values=udapeople" \
                 --output text)
-             export API_URL="http://${SHIVP_IP}:3030"
-             echo "${API_URL}"
-             echo "${API_URL}" >> frontend/.env
-             cat frontend/.env
+             export API_URL="http://$SHIVP_IP:3030"
+             echo API_URL = ${API_URL}
+             cd frontend
+             npm install
+             npm run build 
+             
+             #cat frontend/.env
         
       - run:
             name: Deploy frontend objects
             command: |
               cd frontend
-              export API_URL=$(cat .env)
-              echo "back end API_URL from .env is ${API_URL}"
-              npm run build
-              tar -czvf artifact-"${CIRCLE_WORKFLOW_ID:0:7}".tar.gz dist
-              aws s3 cp dist s3://udapeople-${CIRCLE_WORKFLOW_ID:0:7} --recursive
-    
+              s3Buck=$(echo "udapeople-${CIRCLE_WORKFLOW_ID:0:7}")
+              echo ${CIRCLE_WORKFLOW_ID:0:7}
+              echo $s3Buck
+              aws s3 sync dist s3://$s3Buck/
+              URL02=("http://$s3Buck.s3-website-us-east-1.amazonaws.com")
+             # cd frontend
+             # export API_URL=$(cat .env)
+             # echo "back end API_URL from .env is ${API_URL}"
+             # npm run build
+             # tar -czvf artifact-"${CIRCLE_WORKFLOW_ID:0:7}".tar.gz dist
+             # aws s3 cp dist s3://udapeople-${CIRCLE_WORKFLOW_ID:0:7} --recursive
+      
+      - persist_to_workspace:
+            root: .
+            paths:
+              - frontend/dist
       - destroy-environment:
           workflow_id: "${CIRCLE_WORKFLOW_ID:0:7}"  
       - undo_migrations
@@ -395,16 +410,19 @@ jobs:
                  echo $SHIV_IP >> .circleci/ansible/inventory.txt
                  cat .circleci/ansible/inventory.txt
                  
-            printenv >> ./backend/.env
-            cd backend
-            npm i
-            npm run build
-            cd ..
-            tar -C backend -czvf artifact.tar.gz .
-            cd .circleci/ansible
-            echo " the inventory.txt data is -------"
-            cat inventory.txt
-            ansible-playbook -i inventory.txt deploy-backend.yml
+                 cd .circleci/ansible
+                 ansible-playbook -i inventory.txt deploy-backend.yml
+                 
+            #printenv >> ./backend/.env
+            #cd backend
+            #npm i
+            #npm run build
+            #cd ..
+            #tar -C backend -czvf artifact.tar.gz .
+            #cd .circleci/ansible
+            #echo " the inventory.txt data is -------"
+            #cat inventory.txt
+            #ansible-playbook -i inventory.txt deploy-backend.yml
 
       - destroy-environment:
           workflow_id: "${CIRCLE_WORKFLOW_ID:0:7}"
@@ -428,15 +446,15 @@ jobs:
             export BACKEND_IP=$(aws ec2 describe-instances \
                             --filters "Name=tag:project,Values=udapeople" \
                             --query "Reservations[*].Instances[*].PublicIpAddress" --output text)
-            echo ${BACKEND_IP}
-            export API_URL="http://$BACKEND_IP:3030"
-            echo "${API_URL}"
-            if curl "${API_URL}/api/status" | grep "ok"
-            then
-              echo "Backend alive, Proceeding" 
-            else
+                          echo $BACKEND_IP
+                          export API_URL="http://$BACKEND_IP:3030"
+                          echo "${API_URL}"
+              if curl "${API_URL}/api/status" | grep "ok"
+              then
+               echo "Backend alive, Proceeding" 
+              else
               return 1
-            fi
+              fi
             
       #- destroy-environment:
       #    workflow_id: "${CIRCLE_WORKFLOW_ID:0:7}"
@@ -446,16 +464,20 @@ jobs:
     docker:
       - image: python:3.7-alpine3.11
     steps:
-      - attach_workspace:
-          at: ~/
+      #- attach_workspace:
+      #    at: ~/
       - run:
           name: Install dependencies
           command: |
-            apk add --no-cache curl
-            apk add --no-cache --upgrade bash
-            apk add --no-cache --update ansible
-            apk add --no-cache openssh-client
-            pip3 install awscli
+            apk add --update curl nodejs npm
+            pip install awscli
+            apk add --update tar gzip curl
+            
+            #apk add --no-cache curl
+            #apk add --no-cache --upgrade bash
+            #apk add --no-cache --update ansible
+            #apk add --no-cache openssh-client
+            #pip3 install awscli
       - run:
           name: Package frontend app after smoke test
           command: |
@@ -468,9 +490,9 @@ jobs:
               return 1
             fi
 
-      - destroy-environment:    
-          workflow_id: "${CIRCLE_WORKFLOW_ID:0:7}"
-      - undo_migrations
+      #- destroy-environment:    
+      #    workflow_id: "${CIRCLE_WORKFLOW_ID:0:7}"
+      #- undo_migrations
 
   cloudfront-update:
     docker:
