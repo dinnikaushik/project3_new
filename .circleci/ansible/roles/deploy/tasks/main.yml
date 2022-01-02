@@ -2,6 +2,25 @@
   # Update/upgrade packages.
   # Install nodejs, npm, and pm2.
   
+- name: Creates Directory
+  become: yes
+  file:
+    path: ~/backend
+    state: directory
+    mode: 0755
+
+- name: Copy backend dist files web server
+  become: yes
+  copy:
+    src: ~/project/artifact.tar.gz
+    dest: ~/backend/artifact.tar.gz
+    
+- name: Extract backend files
+  become: yes
+  shell: |
+    cd ~/backend
+    tar -vxf artifact.tar.gz  
+    
 - name: "update apt package."
   become: yes
   apt:
@@ -33,24 +52,6 @@
     production: yes
     state: present
 
-- name: Creates Directory
-  become: yes
-  file:
-    path: ~/backend
-    state: directory
-    mode: 0755
-
-- name: Copy backend dist files web server
-  become: yes
-  copy:
-    src: ~/project/artifact.tar.gz
-    dest: ~/backend/artifact.tar.gz
-    
-- name: Extract backend files
-  become: yes
-  shell: |
-    cd ~/backend
-    tar -vxf artifact.tar.gz
 - name: Executing node
   shell: |
     cd ~/backend
