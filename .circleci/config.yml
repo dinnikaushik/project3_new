@@ -163,6 +163,7 @@ jobs:
               --tags project=udapeople \
               --stack-name "udapeople-frontend-${CIRCLE_WORKFLOW_ID:0:7}" \
               --parameter-overrides ID="${CIRCLE_WORKFLOW_ID:0:7}"
+
       - run:
           name: Now Add back-end ip to ansible inventory file
           command: |
@@ -174,7 +175,10 @@ jobs:
                 echo "[web]" > .circleci/ansible/inventory.txt
                 echo "$SHIV_IP" > .circleci/ansible/inventory.txt
                 
+                echo "printing what's there in inventory after Add back-end ip to ansible inventory file in deploy-infrastructure"
+                
                 cat .circleci/ansible/inventory.txt
+
          # no_output_timeout: 5m      
              
       - persist_to_workspace:
@@ -325,7 +329,9 @@ jobs:
              cd frontend
              npm install
              npm run build 
-             
+             echo "checking for creation of the dist folder"
+             ls -la
+             ls -la ./dist
              #cat frontend/.env
         
       - run:
@@ -348,9 +354,10 @@ jobs:
             root: .
             paths:
               - frontend/dist
+      - undo_migrations              
       - destroy-environment:
           workflow_id: "${CIRCLE_WORKFLOW_ID:0:7}"  
-      - undo_migrations
+
 
   deploy-backend:
     docker:
@@ -424,9 +431,10 @@ jobs:
             #cat inventory.txt
             #ansible-playbook -i inventory.txt deploy-backend.yml
 
+      - undo_migrations            
       - destroy-environment:
           workflow_id: "${CIRCLE_WORKFLOW_ID:0:7}"
-      - undo_migrations
+
 
   smoke-test-backend:
     docker:
@@ -485,8 +493,10 @@ jobs:
             echo ${URL04}
             if curl -s ${URL04} | grep "Welcome"
             then
+              echo "front end alive"
               return 0
             else
+              echo "could not bring up the front end"
               return 1
             fi
 
