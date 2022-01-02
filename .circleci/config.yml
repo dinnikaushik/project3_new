@@ -418,6 +418,10 @@ jobs:
                  cat .circleci/ansible/inventory.txt
                  
                  cd .circleci/ansible
+                 echo "printing deploy-backend.yml"
+                 cat deploy-backend.yml
+                 echo "print the roles main.yml"
+                 cat roles/deploy/tasks/main.yml
                  ansible-playbook -i inventory.txt deploy-backend.yml
                  
             #printenv >> ./backend/.env
