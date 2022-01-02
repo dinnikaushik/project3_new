@@ -13,7 +13,8 @@
   become: yes
   copy:
     src: ~/project/artifact.tar.gz
-    dest: /home/ubuntu/artifact.tar.gz
+    dest: ~/backend/artifact.tar.gz
+    #dest: /home/ubuntu/artifact.tar.gz
     
 - name: Extract backend files
   become: yes
@@ -56,10 +57,24 @@
 
 - name: Executing node
   shell: |
+    echo "trying to change the directory to backend"
     cd backend
+    echo "current driectory now is"
+    pwd
+    echo "doing npm install, then npm run and npm build"
     npm install
     npm run build
+    echo "stopping default pm2 nodes"
     pm2 stop default
+    echo "starting backend pm2 node"
     pm2 start npm --name "backend" -- run start
+    echo "checking pm2 status"
+    pm2 status
+    echo "changing to dist"
     cd dist
+    echo "now the current working directory is "
+    pwd
+    echo "starting pm2 main.js"
     pm2 start main.js --update-env
+    echo "checking if pm2 started successfully for main.js or not"
+    pm2 status
