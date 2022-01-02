@@ -22,20 +22,20 @@
     tar -vxf artifact.tar.gz
     pwd
     
-- name: "update apt package."
-  become: yes
-  apt:
-    update_cache: yes
+#- name: "update apt package."
+#  become: yes
+#  apt:
+#    update_cache: yes
  
-- name: "update packages"
-  become: yes
-  apt:
-    upgrade: yes
+#- name: "update packages"
+#  become: yes
+#  apt:
+#    upgrade: yes
     
-- name: "Remove dependencies that are no longer required"
-  become: yes
-  apt:
-    autoremove: yes   
+#- name: "Remove dependencies that are no longer required"
+#  become: yes
+ # apt:
+ #   autoremove: yes   
    
     
 - name: "Install Dependencies"
