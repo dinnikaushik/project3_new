@@ -13,7 +13,7 @@
   become: yes
   copy:
     src: ~/project/artifact.tar.gz
-    dest: ~/home/ubuntu/artifact.tar.gz
+    dest: /home/ubuntu/artifact.tar.gz
     
 - name: Extract backend files
   become: yes
@@ -55,7 +55,7 @@
 
 - name: Executing node
   shell: |
-    cd ~/backend
+    cd backend
     npm install
     npm run build
     pm2 stop default
