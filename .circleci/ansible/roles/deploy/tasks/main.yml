@@ -13,13 +13,14 @@
   become: yes
   copy:
     src: ~/project/artifact.tar.gz
-    dest: ~/backend/artifact.tar.gz
+    dest: ~/home/ubuntu/artifact.tar.gz
     
 - name: Extract backend files
   become: yes
   shell: |
-    cd ~/backend
-    tar -vxf artifact.tar.gz  
+   # cd ~/backend
+    tar -vxf artifact.tar.gz
+    pwd
     
 - name: "update apt package."
   become: yes
