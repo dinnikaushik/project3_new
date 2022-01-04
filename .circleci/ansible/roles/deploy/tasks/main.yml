@@ -1,4 +1,4 @@
---
+---
 - name: Extract artifact.tar.gz file to EC2 Instance
     unarchive: 
       src:  ../../backend/artefacts.tar.gz
