@@ -241,8 +241,8 @@ jobs:
               echo NODE_ENV=production >> ".env"
               echo TYPEORM_CONNECTION=postgres >> .env
               echo TYPEORM_MIGRATIONS_DIR=./src/migrations >> .env
-              echo TYPEORM_ENTITIES=./src/modules/domain/**/*.entity.ts >> .env
-              echo TYPEORM_MIGRATIONS=./src/migrations/*.ts >> .env
+              echo TYPEORM_ENTITIES=./src/modules/domain/**/*.entity.js >> .env
+              echo TYPEORM_MIGRATIONS=./src/migrations/*.js >> .env
               echo TYPEORM_HOST=$TYPEORM_HOST >> .env
               echo TYPEORM_PORT=$TYPEORM_PORT >> .env
               echo TYPEORM_USERNAME=$TYPEORM_USERNAME >> .env
@@ -408,67 +408,67 @@ jobs:
             ansible-playbook -i inventory.txt deploy-backend.yml 
             
   
-  deploy-backend:
-    docker:
-      # Docker image here that supports Ansible
-      - image: python:3.7-alpine3.11
-    steps:
-      # Checkout code from git
-      - checkout
-      - run:
-          name: Install dependencies
-          command: |
-            # your code here
-            apk add tar gzip
-            apk update pip3
-            pip3 install awscli
-            apk add --update curl
-            apk add --update nodejs npm
-            apk add --update ansible
-            
+#  deploy-backend:
+#    docker:
+#      # Docker image here that supports Ansible
+#      - image: python:3.7-alpine3.11
+#    steps:
+#      # Checkout code from git
+#      - checkout
+#      - run:
+#          name: Install dependencies
+#          command: |
+#            # your code here
+#            apk add tar gzip
+#            apk update pip3
+#            pip3 install awscli
+#            apk add --update curl
+#            apk add --update nodejs npm
+#            apk add --update ansible
+#            
       # Add ssh keys with fingerprint
-      - add_ssh_keys:
-            fingerprints: ["fb:65:09:40:01:ee:f6:16:90:00:3f:cf:1c:19:11:5e"] 
-      # attach workspace
-      - attach_workspace:
-            at: ~/
-      - run:
-          name: Get IP and Deploy backend
-          command: |
-            ls -la
-            [[ ! -d backend ]] && mkdir backend
-            myvar="backend/.env"
-            echo ENVIROMENT=production > $myvar
-            echo NODE_ENV=production >> $myvar
-            echo TYPEORM_CONNECTION=postgres >> $myvar
-            echo TYPEORM_MIGRATIONS_DIR=./src/migrations >> $myvar
-            echo TYPEORM_ENTITIES=./src/modules/domain/**/*.entity.ts >> $myvar
-            echo TYPEORM_MIGRATIONS=./src/migrations/*.ts >> $myvar
-            echo TYPEORM_HOST=$TYPEORM_HOST >> $myvar
-            echo TYPEORM_PORT=$TYPEORM_PORT >> $myvar
-            echo TYPEORM_USERNAME=$TYPEORM_USERNAME >> $myvar
-            echo TYPEORM_PASSWORD=$TYPEORM_PASSWORD >> $myvar
-            echo TYPEORM_DATABASE=$TYPEORM_DATABASE >> $myvar
-            cat $myvar
+#      - add_ssh_keys:
+#            fingerprints: ["fb:65:09:40:01:ee:f6:16:90:00:3f:cf:1c:19:11:5e"] 
+#      # attach workspace
+#      - attach_workspace:
+#            at: ~/
+#      - run:
+#          name: Get IP and Deploy backend
+#          command: |
+#            ls -la
+#            [[ ! -d backend ]] && mkdir backend
+#            myvar="backend/.env"
+#            echo ENVIROMENT=production > $myvar
+#            echo NODE_ENV=production >> $myvar
+#            echo TYPEORM_CONNECTION=postgres >> $myvar
+#            echo TYPEORM_MIGRATIONS_DIR=./src/migrations >> $myvar
+#            echo TYPEORM_ENTITIES=./src/modules/domain/**/*.entity.ts >> $myvar
+#            echo TYPEORM_MIGRATIONS=./src/migrations/*.ts >> $myvar
+#            echo TYPEORM_HOST=$TYPEORM_HOST >> $myvar
+#            echo TYPEORM_PORT=$TYPEORM_PORT >> $myvar
+#            echo TYPEORM_USERNAME=$TYPEORM_USERNAME >> $myvar
+#            echo TYPEORM_PASSWORD=$TYPEORM_PASSWORD >> $myvar
+#            echo TYPEORM_DATABASE=$TYPEORM_DATABASE >> $myvar
+#            cat $myvar
           
-            tar -C backend -czvf artifact.tar.gz .
-            ls -la
+#            tar -C backend -czvf artifact.tar.gz .
+#            ls -la
             
-            SHIV_IP=$(aws ec2 describe-instances \
-                  --query 'Reservations[*].Instances[*].PublicIpAddress' \
-                  --filters "Name=tag:project,Values=udapeople" \
-                  --output text)
-                 echo "$SHIV_IP"
-                 echo "[web]" > .circleci/ansible/inventory.txt
-                 echo $SHIV_IP >> .circleci/ansible/inventory.txt
-                 cat .circleci/ansible/inventory.txt
+#            SHIV_IP=$(aws ec2 describe-instances \
+#                  --query 'Reservations[*].Instances[*].PublicIpAddress' \
+#                  --filters "Name=tag:project,Values=udapeople" \
+#                  --output text)
+#                 echo "$SHIV_IP"
+#                echo "[web]" > .circleci/ansible/inventory.txt
+#                 echo $SHIV_IP >> .circleci/ansible/inventory.txt
+#                 cat .circleci/ansible/inventory.txt
                  
-                 cd .circleci/ansible
-                 echo "printing deploy-backend.yml"
-                 cat deploy-backend.yml
-                 echo "print the roles main.yml"
-                 cat roles/deploy/tasks/main.yml
-                 ansible-playbook -i inventory.txt deploy-backend.yml
+#                 cd .circleci/ansible
+#                 echo "printing deploy-backend.yml"
+#                 cat deploy-backend.yml
+#                 echo "print the roles main.yml"
+#                 cat roles/deploy/tasks/main.yml
+#                 ansible-playbook -i inventory.txt deploy-backend.yml
                  
             #printenv >> ./backend/.env
             #cd backend
@@ -518,7 +518,7 @@ jobs:
       #    workflow_id: "${CIRCLE_WORKFLOW_ID:0:7}"
       #- undo_migrations      
 
-  smoke-test:
+  smoke-test-frontend:
     docker:
       - image: python:3.7-alpine3.11
     steps:
@@ -657,9 +657,9 @@ workflows:
           requires: [run-migrations]
       - smoke-test-backend:
           requires: [deploy-backend-test]
-      - smoke-test:
-          requires: [deploy-frontend]
+      - smoke-test-frontend:
+          requires: [deploy-frontend, smoke-test-backend]
       - cloudfront-update:
-          requires: [smoke-test]
+          requires: [smoke-test-backend, smoke-test-frontend]
       #- cleanup:
       #    requires: [cloudfront-update]    
