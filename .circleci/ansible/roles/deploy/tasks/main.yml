@@ -9,27 +9,27 @@
 
 - name: "install dependencies Nodejs NPM"
   become: yes
-    apt:
-      name: ["nodejs", "npm"]
-      state: present
-      update_cache: yes   
+  apt:
+    name: ["nodejs", "npm"]
+    state: present
+    update_cache: yes   
          
 - name: "Install netstat tool - To check currently open ports"
   become: yes
-    apt:
-      name:  ["net-tools"]
-      state: latest
-      update_cache: yes 
+  apt:
+    name:  ["net-tools"]
+    state: latest
+    update_cache: yes 
 
 - name: "update apt packages."
   become: yes
     become_method: sudo
-    apt:
+      apt:
       update_cache: yes
 
 - name: "pm2 install global using NPM"
   become: yes
-    shell: |
+  shell: |
           cd /home/ubuntu/
           npm install pm2 -g
          
@@ -45,7 +45,7 @@
         netstat -tulpn
         curl localhost:3030/api/status
         netstat -tulpn
-    ignore_errors: true 
+    ignore_errors: true  
     
 #- name: Creates Directory
 #  become: yes
