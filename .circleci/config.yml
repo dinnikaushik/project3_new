@@ -346,6 +346,58 @@ jobs:
       #    workflow_id: "${CIRCLE_WORKFLOW_ID:0:7}"  
 
 
+  deploy-backend-test:
+    docker:
+      # Docker image here that supports Ansible
+      - image: python:3.7-alpine3.11
+    steps:
+      # Checkout code from git
+      - checkout
+      - run:
+          name: Install dependencies
+          command: |
+            # your code here
+            apk add tar gzip
+            apk update pip3
+            pip3 install awscli
+            apk add --update curl
+            apk add --update nodejs npm
+            apk add --update ansible
+            
+      # Add ssh keys with fingerprint
+      - add_ssh_keys:
+            fingerprints: ["fb:65:09:40:01:ee:f6:16:90:00:3f:cf:1c:19:11:5e"] 
+      # attach workspace
+      - attach_workspace:
+            at: ~/
+      - run:
+          name: Get IP and Deploy backend
+          command: |
+            cd backend
+            npm i
+            npm install typescript --save-dev
+            npm run build
+            mv node_modules dist
+            echo NODE_ENV=production >> "dist/.env"
+            echo ENVIRONMENT=production >> "dist/.env"
+            echo VERSION=1 >> "dist/.env"
+            echo TYPEORM_CONNECTION=postgres >> "dist/.env"
+            echo TYPEORM_MIGRATIONS_DIR=./src/migrations >> "dist/.env"
+            echo TYPEORM_ENTITIES=./modules/domain/**/*.entity.js >> "dist/.env"
+            echo TYPEORM_MIGRATIONS=./migrations/*.js >> "dist/.env"
+            echo TYPEORM_HOST=$TYPEORM_HOST >> "dist/.env"
+            echo TYPEORM_PORT=$TYPEORM_PORT >> "dist/.env"
+            echo TYPEORM_USERNAME=$TYPEORM_USERNAME >> "dist/.env"
+            echo TYPEORM_PASSWORD=$TYPEORM_PASSWORD >> "dist/.env"
+            echo TYPEORM_DATABASE=$TYPEORM_DATABASE >> "dist/.env" 
+            echo NODE_PATH=/home/ubuntu/dist/node_modules >> "dist/.env"
+            tar -czvf artefacts.tar.gz ./dist
+            cd ..
+            cd .circleci/ansible
+            echo "Contents  of the inventory.txt file is -------"
+            cat inventory.txt
+            ansible-playbook -i inventory.txt deploy-backend.yml 
+            
   deploy-backend:
     docker:
       # Docker image here that supports Ansible
@@ -591,10 +643,10 @@ workflows:
           requires: [configure-infrastructure]    
       - deploy-frontend:
          requires: [run-migrations]
-      - deploy-backend:
+      - deploy-backend-test:
           requires: [run-migrations]
       - smoke-test-backend:
-          requires: [deploy-backend]
+          requires: [deploy-backend-test]
       - smoke-test:
           requires: [deploy-frontend]
       #- cloudfront-update:
