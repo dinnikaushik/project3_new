@@ -1,67 +1,118 @@
-- name: Creates Directory
-  become: yes
-  become_user: ubuntu
-  file:
-    path: /home/ubuntu/backend
-    state: directory
-    mode: 0755
+--
+  - name: Extract artifact.tar.gz file to EC2 Instance
+    unarchive: 
+      src:  ../../backend/artefacts.tar.gz
+      dest: /home/ubuntu/
+      owner: ubuntu
+      remote_src: no
+ 
 
-- name: Copy backend dist files web server
-  become: yes
-  become_user: ubuntu
-  copy:
-    src: ~/project/artifact.tar.gz
-    #dest: ~/backend/artifact.tar.gz
-    dest: /home/ubuntu/backend/artifact.tar.gz
+  - name: "install dependencies Nodejs NPM"
+    become: yes
+    apt:
+      name: ["nodejs", "npm"]
+      state: present
+      update_cache: yes   
+         
+ 
+  - name: "Install netstat tool - To check currently open ports"
+    become: yes
+    apt:
+      name:  ["net-tools"]
+      state: latest
+      update_cache: yes 
+
+  - name: "update apt packages."
+    become: yes
+    become_method: sudo
+    apt:
+      update_cache: yes
+
+
+  - name: "pm2 install global using NPM"
+    become: yes
+    shell: |
+          cd /home/ubuntu/
+          npm install pm2 -g
+         
+  - name: "Start Backend App : Check whether Port:3030 is Open"
+    become: yes
+    become_user: ubuntu 
+    shell: |
+        cd /home/ubuntu/dist
+        pm2 list
+        pm2 stop default
+        pm2 start main.js -n 'udapeople-backend'
+        pm2 status all
+        netstat -tulpn
+        curl localhost:3030/api/status
+        netstat -tulpn
+    ignore_errors: true 
     
-- name: Extract backend files
-  become: yes
-  become_user: ubuntu
-  shell: |
-    cd /home/ubuntu/backend
-    tar -vxf artifact.tar.gz
+#- name: Creates Directory
+#  become: yes
+#  become_user: ubuntu
+#  file:
+#    path: /home/ubuntu/backend
+#    state: directory
+#    mode: 0755
+
+#- name: Copy backend dist files web server
+#  become: yes
+#  become_user: ubuntu
+#  copy:
+#    src: ~/project/artifact.tar.gz
+    #dest: ~/backend/artifact.tar.gz
+#    dest: /home/ubuntu/backend/artifact.tar.gz
+    
+#- name: Extract backend files
+#  become: yes
+#  become_user: ubuntu
+#  shell: |
+#    cd /home/ubuntu/backend
+#    tar -vxf artifact.tar.gz
    #pwd
     
-- name: "update apt package."
-  become: yes
-  apt:
-    update_cache: yes
+#- name: "update apt package."
+#  become: yes
+#  apt:
+#    update_cache: yes
  
-- name: "update packages"
-  become: yes
-  apt:
-    upgrade: yes
+#- name: "update packages"
+#  become: yes
+#  apt:
+#    upgrade: yes
     
-- name: "Remove dependencies that are no longer required"
-  become: yes
-  apt:
-    autoremove: yes   
+#- name: "Remove dependencies that are no longer required"
+#  become: yes
+#  apt:
+#    autoremove: yes   
    
     
-- name: "Install Dependencies"
-  become: yes
-  apt:
-    name: ["nodejs", "npm"]
-    state: latest
-    update_cache: yes
+#- name: "Install Dependencies"
+#  become: yes
+#  apt:
+#    name: ["nodejs", "npm"]
+#    state: latest
+#    update_cache: yes
 
-- name: Install pm2
-  become: yes
-  npm:
-    name: pm2
-    global: yes
-    production: yes
-    state: present
+#- name: Install pm2
+#  become: yes
+#  npm:
+#    name: pm2
+#    global: yes
+#    production: yes
+#    state: present
 
-- name: Executing node
-  become: true
-  shell: |
-    cd /home/ubuntu/backend
-    npm install
-    npm run build
-    pm2 stop default
-    pm2 start npm --name "backend" -- run start
-    pm2 status
-    cd /home/ubuntu/backend/dist
-    pm2 start main.js --update-env
-    pm2 status
+#- name: Executing node
+#  become: true
+#  shell: |
+#    cd /home/ubuntu/backend
+#    npm install
+#    npm run build
+#    pm2 stop default
+#    pm2 start npm --name "backend" -- run start
+#    pm2 status
+#    cd /home/ubuntu/backend/dist
+#    pm2 start main.js --update-env
+#    pm2 status
