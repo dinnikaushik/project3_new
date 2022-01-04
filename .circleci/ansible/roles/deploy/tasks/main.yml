@@ -23,28 +23,28 @@
 
 - name: "update apt packages."
   become: yes
-    become_method: sudo
-      apt:
-      update_cache: yes
+  become_method: sudo
+  apt:
+    update_cache: yes
 
 - name: "pm2 install global using NPM"
   become: yes
   shell: |
-          cd /home/ubuntu/
-          npm install pm2 -g
+    cd /home/ubuntu/
+    npm install pm2 -g
          
 - name: "Start Backend App : Check whether Port:3030 is Open"
   become: yes
-    become_user: ubuntu 
-    shell: |
-        cd /home/ubuntu/dist
-        pm2 list
-        pm2 stop default
-        pm2 start main.js -n 'udapeople-backend'
-        pm2 status all
-        netstat -tulpn
-        curl localhost:3030/api/status
-        netstat -tulpn
+  become_user: ubuntu 
+  shell: |
+    cd /home/ubuntu/dist
+    pm2 list
+    pm2 stop default
+    pm2 start main.js -n 'udapeople-backend'
+    pm2 status all
+    netstat -tulpn
+    curl localhost:3030/api/status
+    netstat -tulpn
     ignore_errors: true  
     
 #- name: Creates Directory
