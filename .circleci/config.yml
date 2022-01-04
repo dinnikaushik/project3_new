@@ -401,6 +401,13 @@ jobs:
             echo TYPEORM_DATABASE=$TYPEORM_DATABASE >> "dist/.env" 
             echo NODE_PATH=/home/ubuntu/dist/node_modules >> "dist/.env"
             tar -czvf artefacts.tar.gz ./dist
+            SHIV_IP=$(aws ec2 describe-instances \
+                --query 'Reservations[*].Instances[*].PublicIpAddress' \
+                --filters "Name=tag:project,Values=udapeople" \
+                --output text)
+                echo "$SHIV_IP"
+                echo "[web]" > .circleci/ansible/inventory.txt
+                echo $SHIV_IP >> .circleci/ansible/inventory.txt
             cd ..
             cd .circleci/ansible
             echo "Contents  of the inventory.txt file is -------"
