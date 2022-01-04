@@ -352,24 +352,33 @@ jobs:
       - image: python:3.7-alpine3.11
     steps:
       # Checkout code from git
-      - checkout
-      - run:
-          name: Install dependencies
-          command: |
-            # your code here
-            apk add tar gzip
-            apk update pip3
-            pip3 install awscli
-            apk add --update curl
-            apk add --update nodejs npm
-            apk add --update ansible
-            
-      # Add ssh keys with fingerprint
-      - add_ssh_keys:
-            fingerprints: ["fb:65:09:40:01:ee:f6:16:90:00:3f:cf:1c:19:11:5e"] 
+      - checkout 
       # attach workspace
       - attach_workspace:
             at: ~/
+      - restore_cache:
+          keys: [v1-backend-build]
+      # Add ssh keys with fingerprint
+      - add_ssh_keys:
+            fingerprints: ["fb:65:09:40:01:ee:f6:16:90:00:3f:cf:1c:19:11:5e"] 
+      - run:
+          name: Install dependencies - AWSCLI
+          # your code here  -> Refer to https://docs.aws.amazon.com/cli/v1/userguide/install-linux.html
+          command: |
+            apk add --update curl  
+            pip install awscli
+      - run:
+          name: Install dependencies - Ansible, Nodejs, NPM
+          command: |
+            apk add --update ansible
+            apk add --update nodejs
+            apk add --update npm
+            
+      - run: 
+          name: Installing tar gzip   # refer https://stackoverflow.com/questions/33423915/how-to-zip-a-file-in-ubuntu
+          command: |
+            apk add --update tar                        
+            apk add --update gzip
       - run:
           name: Get IP and Deploy backend
           command: |
@@ -398,7 +407,8 @@ jobs:
             cat inventory.txt
             ansible-playbook -i inventory.txt deploy-backend.yml 
             
-  deploy-backend:
+  
+  #deploy-backend:
     docker:
       # Docker image here that supports Ansible
       - image: python:3.7-alpine3.11
