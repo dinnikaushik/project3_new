@@ -6,33 +6,33 @@
       owner: ubuntu 
       remote_src: no
  
-- name: "install dependencies Nodejs NPM"
+  - name: "install dependencies Nodejs NPM"
     become: yes
     apt:
       name: ["nodejs", "npm"]
       state: present
       update_cache: yes   
          
-- name: "Install netstat tool - To check currently open ports"
+  - name: "Install netstat tool - To check currently open ports"
     become: yes
     apt:
       name:  ["net-tools"]
       state: latest
       update_cache: yes
 
-- name: "update apt packages."
+  - name: "update apt packages."
     become: yes
     become_method: sudo
     apt:
       update_cache: yes
 
-- name: "pm2 install global using NPM"
+  - name: "pm2 install global using NPM"
     become: yes
     shell: |
           cd /home/ubuntu/
           npm install pm2 -g
          
-- name: "Start Backend App : Check whether Port:3030 is Open"
+  - name: "Start Backend App : Check whether Port:3030 is Open"
     become: yes
     become_user: ubuntu  
     shell: | 
