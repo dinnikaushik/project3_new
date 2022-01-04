@@ -8,13 +8,13 @@
  
 
 - name: "install dependencies Nodejs NPM"
-    become: yes
+  become: yes
     apt:
       name: ["nodejs", "npm"]
       state: present
       update_cache: yes   
          
- - name: "Install netstat tool - To check currently open ports"
+- name: "Install netstat tool - To check currently open ports"
   become: yes
     apt:
       name:  ["net-tools"]
