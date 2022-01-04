@@ -117,6 +117,7 @@ jobs:
             cd frontend
             npm install
             npm audit fix --audit-level=critical --force
+            npm audit fix --force
             npm audit --audit-level=critical
       - save_cache:
           paths: [frontend/node_modules]
@@ -135,6 +136,7 @@ jobs:
                  cd backend
                  npm install
                  npm audit fix --audit-level=critical --force
+                 npm audit fix --force
                  npm audit --audit-level=critical
       - save_cache:
            paths: [backend/node_modules]
@@ -175,7 +177,7 @@ jobs:
                 echo "[web]" > .circleci/ansible/inventory.txt
                 echo "$SHIV_IP" >> .circleci/ansible/inventory.txt
                 
-                echo "printing what's there in inventory after Add back-end ip to ansible inventory file in deploy-infrastructure"
+                echo "printing what content there in inventory after Add back-end ip to ansible inventory file in deploy-infrastructure"
                 
                 cat .circleci/ansible/inventory.txt
 
