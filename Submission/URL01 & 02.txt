@@ -1,0 +1,6 @@
+Public GitHub repository URL (not private) [URL01]- https://github.com/Singhshivpal/Shiv-project3-master
+
+Public URL for your S3 Bucket (aka, your green candidate front-end) [URL02]- http://udapeople-db69665.s3.amazonaws.com/index.html
+Cloud front-  http://d1g4u1ruv8zuvs.cloudfront.net
+
+Note:  Dear Reviewer for your kind attention, memstash.io was down for few days, when i was working on build activies; Hence I have commented the memstash code in my config.yml file.
