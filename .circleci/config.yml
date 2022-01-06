@@ -188,8 +188,8 @@ jobs:
           paths:
             - project/.circleci/ansible/inventory.txt
             
-      #- destroy-environment:
-      #    workflow_id: "${CIRCLE_WORKFLOW_ID:0:7}" 
+      - destroy-environment:
+          workflow_id: "${CIRCLE_WORKFLOW_ID:0:7}" 
 
   configure-infrastructure:
     docker:
@@ -263,7 +263,14 @@ jobs:
            
             cat migrations_dump.txt
           no_output_timeout: 30m 
-     
+      #- run:
+      #    name: post migration data to memstash
+      #    command: |
+      #       if grep -q "has been executed successfully." ~/project/backend/migrations_dump.txt
+      #       then
+      #        echo "MemStash IO is down. Hence commented is code and proceeding on next build."
+      #        #curl -H "Content-Type: text/plain" -H "token: 5db2c201-b4a9-41b4-9a5c-************" --request PUT --data "1" https://api.memstash.io/values/migration_${CIRCLE_WORKFLOW_ID}
+      #       fi
       - destroy-environment:
           workflow_id: "${CIRCLE_WORKFLOW_ID:0:7}"
 
@@ -280,32 +287,7 @@ jobs:
               sudo apt-get -qq install awscli
       - attach_workspace:
             at: . 
-      #- restore_cache:
-      #    keys: [v1-frontend-build]
-      #- attach_workspace:
-      #    at: ~/
-      #- run:
-       #   name: Install AWS CLI dependenciess
-       #   working_directory: /tmp
-       #   command: |
-       #     sudo apt-get update
-       #     sudo apt install curl -y 
-       #     sudo apt install unzip
-       #     curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
-       #     unzip awscliv2.zip
-       #     sudo ./aws/install
-       #     /usr/local/bin/aws --version
-      #- run:
-      #    name: Install required dependencies tar
-      #    command: sudo apt-get install -y tar gzip
-      #- run:
-      #    name: Install required npm
-      #    command: |
-      #      pwd
-      #      cd frontend
-      #      pwd
-      #      ls -ltr
-      #      npm install
+
       - run: 
             name: Get backend url
             command: |
@@ -332,20 +314,15 @@ jobs:
               echo $s3Buck
               aws s3 sync dist s3://$s3Buck/
               URL02=("http://$s3Buck.s3-website-us-east-1.amazonaws.com")
-             # cd frontend
-             # export API_URL=$(cat .env)
-             # echo "back end API_URL from .env is ${API_URL}"
-             # npm run build
-             # tar -czvf artifact-"${CIRCLE_WORKFLOW_ID:0:7}".tar.gz dist
-             # aws s3 cp dist s3://udapeople-${CIRCLE_WORKFLOW_ID:0:7} --recursive
-      
+              #echo "MemStash IO is down. Hence commented is code and proceeding on next build."
+              #curl -H "Content-Type: text/plain" -H "token: 5db2c201-b4a9-41b4-9a5c-************" --request PUT --data "$URL02" https://api.memstash.io/values/s3Buck_${CIRCLE_WORKFLOW_ID}
       - persist_to_workspace:
             root: .
             paths:
               - frontend/dist
-      #- undo_migrations              
-      #- destroy-environment:
-      #    workflow_id: "${CIRCLE_WORKFLOW_ID:0:7}"  
+      - undo_migrations              
+      - destroy-environment:
+          workflow_id: "${CIRCLE_WORKFLOW_ID:0:7}"  
 
 
   deploy-backend-test:
@@ -408,84 +385,10 @@ jobs:
             echo "Contents  of the inventory.txt file is -------"
             cat inventory.txt
             ansible-playbook -i inventory.txt deploy-backend.yml 
-            
-  
-#  deploy-backend:
-#    docker:
-#      # Docker image here that supports Ansible
-#      - image: python:3.7-alpine3.11
-#    steps:
-#      # Checkout code from git
-#      - checkout
-#      - run:
-#          name: Install dependencies
-#          command: |
-#            # your code here
-#            apk add tar gzip
-#            apk update pip3
-#            pip3 install awscli
-#            apk add --update curl
-#            apk add --update nodejs npm
-#            apk add --update ansible
-#            
-      # Add ssh keys with fingerprint
-#      - add_ssh_keys:
-#            fingerprints: ["fb:65:09:40:01:ee:f6:16:90:00:3f:cf:1c:19:11:5e"] 
-#      # attach workspace
-#      - attach_workspace:
-#            at: ~/
-#      - run:
-#          name: Get IP and Deploy backend
-#          command: |
-#            ls -la
-#            [[ ! -d backend ]] && mkdir backend
-#            myvar="backend/.env"
-#            echo ENVIROMENT=production > $myvar
-#            echo NODE_ENV=production >> $myvar
-#            echo TYPEORM_CONNECTION=postgres >> $myvar
-#            echo TYPEORM_MIGRATIONS_DIR=./src/migrations >> $myvar
-#            echo TYPEORM_ENTITIES=./src/modules/domain/**/*.entity.ts >> $myvar
-#            echo TYPEORM_MIGRATIONS=./src/migrations/*.ts >> $myvar
-#            echo TYPEORM_HOST=$TYPEORM_HOST >> $myvar
-#            echo TYPEORM_PORT=$TYPEORM_PORT >> $myvar
-#            echo TYPEORM_USERNAME=$TYPEORM_USERNAME >> $myvar
-#            echo TYPEORM_PASSWORD=$TYPEORM_PASSWORD >> $myvar
-#            echo TYPEORM_DATABASE=$TYPEORM_DATABASE >> $myvar
-#            cat $myvar
-          
-#            tar -C backend -czvf artifact.tar.gz .
-#            ls -la
-            
-#            SHIV_IP=$(aws ec2 describe-instances \
-#                  --query 'Reservations[*].Instances[*].PublicIpAddress' \
-#                  --filters "Name=tag:project,Values=udapeople" \
-#                  --output text)
-#                 echo "$SHIV_IP"
-#                echo "[web]" > .circleci/ansible/inventory.txt
-#                 echo $SHIV_IP >> .circleci/ansible/inventory.txt
-#                 cat .circleci/ansible/inventory.txt
-                 
-#                 cd .circleci/ansible
-#                 echo "printing deploy-backend.yml"
-#                 cat deploy-backend.yml
-#                 echo "print the roles main.yml"
-#                 cat roles/deploy/tasks/main.yml
-#                 ansible-playbook -i inventory.txt deploy-backend.yml
-                 
-            #printenv >> ./backend/.env
-            #cd backend
-            #npm i
-            #npm run build
-            #cd ..
-            #tar -C backend -czvf artifact.tar.gz .
-            #cd .circleci/ansible
-            #echo " the inventory.txt data is -------"
-            #cat inventory.txt
-            #ansible-playbook -i inventory.txt deploy-backend.yml
 
-      #- undo_migrations            
-      #- destroy-environment:
-      #    workflow_id: "${CIRCLE_WORKFLOW_ID:0:7}"
+      - undo_migrations            
+      - destroy-environment:
+          workflow_id: "${CIRCLE_WORKFLOW_ID:0:7}"
 
 
   smoke-test-backend:
@@ -516,9 +419,9 @@ jobs:
               return 1
               fi
             
-      #- destroy-environment:
-      #    workflow_id: "${CIRCLE_WORKFLOW_ID:0:7}"
-      #- undo_migrations      
+      - destroy-environment:
+          workflow_id: "${CIRCLE_WORKFLOW_ID:0:7}"
+      - undo_migrations      
 
   smoke-test-frontend:
     docker:
@@ -552,9 +455,9 @@ jobs:
               return 1
             fi
 
-      #- destroy-environment:    
-      #    workflow_id: "${CIRCLE_WORKFLOW_ID:0:7}"
-      #- undo_migrations
+      - destroy-environment:    
+          workflow_id: "${CIRCLE_WORKFLOW_ID:0:7}"
+      - undo_migrations
 
   cloudfront-update:
     docker:
