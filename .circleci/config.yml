@@ -188,8 +188,8 @@ jobs:
           paths:
             - project/.circleci/ansible/inventory.txt
             
-      - destroy-environment:
-          workflow_id: "${CIRCLE_WORKFLOW_ID:0:7}" 
+      #- destroy-environment:
+      #    workflow_id: "${CIRCLE_WORKFLOW_ID:0:7}" 
 
   configure-infrastructure:
     docker:
@@ -223,8 +223,8 @@ jobs:
                     cd .circleci/ansible
                     ansible-playbook -i inventory.txt nodex.yml
                     
-      - destroy-environment:
-          workflow_id: "${CIRCLE_WORKFLOW_ID:0:7}"
+      #- destroy-environment:
+      #    workflow_id: "${CIRCLE_WORKFLOW_ID:0:7}"
 
   run-migrations:
     docker:
@@ -271,8 +271,8 @@ jobs:
       #        echo "MemStash IO is down. Hence commented is code and proceeding on next build."
       #        #curl -H "Content-Type: text/plain" -H "token: 5db2c201-b4a9-41b4-9a5c-************" --request PUT --data "1" https://api.memstash.io/values/migration_${CIRCLE_WORKFLOW_ID}
       #       fi
-      - destroy-environment:
-          workflow_id: "${CIRCLE_WORKFLOW_ID:0:7}"
+      #- destroy-environment:
+      #    workflow_id: "${CIRCLE_WORKFLOW_ID:0:7}"
 
   deploy-frontend:
     docker:
@@ -320,9 +320,9 @@ jobs:
             root: .
             paths:
               - frontend/dist
-      - undo_migrations              
-      - destroy-environment:
-          workflow_id: "${CIRCLE_WORKFLOW_ID:0:7}"  
+      #- undo_migrations              
+      #- destroy-environment:
+      #    workflow_id: "${CIRCLE_WORKFLOW_ID:0:7}"  
 
 
   deploy-backend-test:
@@ -386,9 +386,9 @@ jobs:
             cat inventory.txt
             ansible-playbook -i inventory.txt deploy-backend.yml 
 
-      - undo_migrations            
-      - destroy-environment:
-          workflow_id: "${CIRCLE_WORKFLOW_ID:0:7}"
+      #- undo_migrations            
+      #- destroy-environment:
+      #    workflow_id: "${CIRCLE_WORKFLOW_ID:0:7}"
 
 
   smoke-test-backend:
@@ -419,9 +419,9 @@ jobs:
               return 1
               fi
             
-      - destroy-environment:
-          workflow_id: "${CIRCLE_WORKFLOW_ID:0:7}"
-      - undo_migrations      
+      #- destroy-environment:
+      #    workflow_id: "${CIRCLE_WORKFLOW_ID:0:7}"
+      #- undo_migrations      
 
   smoke-test-frontend:
     docker:
@@ -455,9 +455,9 @@ jobs:
               return 1
             fi
 
-      - destroy-environment:    
-          workflow_id: "${CIRCLE_WORKFLOW_ID:0:7}"
-      - undo_migrations
+      #- destroy-environment:    
+      #    workflow_id: "${CIRCLE_WORKFLOW_ID:0:7}"
+      #- undo_migrations
 
   cloudfront-update:
     docker:
@@ -492,9 +492,9 @@ jobs:
           paths:
             - project/oldworkflowID.txt      
 
-      - destroy-environment:    
-          workflow_id: "${CIRCLE_WORKFLOW_ID:0:7}"
-      - undo_migrations
+      #- destroy-environment:    
+      #    workflow_id: "${CIRCLE_WORKFLOW_ID:0:7}"
+      #- undo_migrations
 
   cleanup:
     docker:
@@ -546,25 +546,3 @@ workflows:
           requires: [build-backend]
       - scan-frontend:
           requires: [build-frontend]
-      - deploy-infrastructure:
-          requires: [test-frontend, test-backend, scan-frontend, scan-backend]
-          filters:
-              branches:
-                only:
-                  - master
-      - configure-infrastructure:
-          requires: [deploy-infrastructure]
-      - run-migrations:
-          requires: [configure-infrastructure]    
-      - deploy-frontend:
-          requires: [run-migrations]
-      - deploy-backend-test:
-          requires: [run-migrations]
-      - smoke-test-backend:
-          requires: [deploy-backend-test]
-      - smoke-test-frontend:
-          requires: [deploy-frontend, smoke-test-backend]
-      - cloudfront-update:
-          requires: [smoke-test-backend, smoke-test-frontend]
-      #- cleanup:
-      #    requires: [cloudfront-update]    
