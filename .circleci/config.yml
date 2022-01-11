@@ -145,7 +145,6 @@ jobs:
       - run:
           name: SSH or Git CLI client 
           command: |
-            yum install update
             yum install -y openssh-client git
             
       - checkout 
