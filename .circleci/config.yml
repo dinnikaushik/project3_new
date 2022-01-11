@@ -142,6 +142,12 @@ jobs:
     docker:
       - image: amazon/aws-cli
     steps:
+      - run:
+          name: SSH or Git CLI client 
+          command: |
+            apt-get update
+            apt-get install -y openssh-client git
+            
       - checkout 
       - run:
           name: Install Tar & gzip
