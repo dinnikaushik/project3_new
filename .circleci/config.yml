@@ -196,14 +196,16 @@ jobs:
     docker:
       - image: python:3.7-alpine3.11 
     steps:
-      - checkout
-      - add_ssh_keys:
-              fingerprints: ["65:96:d4:ae:5b:21:65:7e:57:d7:e6:ef:52:1b:4b:ec"] 
-      # attach workspace
       - run:
           name: SSH or Git CLI client 
           command: |
             apk add --update openssh-client git
+            
+      - checkout
+      - add_ssh_keys:
+              fingerprints: ["65:96:d4:ae:5b:21:65:7e:57:d7:e6:ef:52:1b:4b:ec"] 
+      # attach workspace
+
 
       - attach_workspace:
           at: ~/
