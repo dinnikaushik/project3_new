@@ -269,6 +269,7 @@ jobs:
           command: |
             cd backend
             npm install
+            npm audit fix
             npm run migrations > migrations_dump.txt
             cat migrations_dump.txt
           no_output_timeout: 30m 
