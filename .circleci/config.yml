@@ -257,7 +257,7 @@ jobs:
               echo TYPEORM_PORT=5432 >> .env
               echo TYPEORM_USERNAME=postgres >> .env
               echo TYPEORM_PASSWORD=udapeople123 >> .env
-              echo TYPEORM_DATABASE=udapeople-prod >> .env
+              echo TYPEORM_DATABASE=postgres >> .env
               ls -latr
               cat .env
       
@@ -269,26 +269,26 @@ jobs:
           command: |
             cd backend
             npm install
-            npm audit fix --audit-level=critical --force
-            npm audit --audit-level=critical
+            npm audit fix --force
             npm run migrations > migrations_dump.txt
             cat migrations_dump.txt
+          no_output_timeout: 30m 
           # Your code here
           #  exit 1
-      - run:
-          name: Send migration results to file as memstash not available
-          command: |
-            if grep -q "has been executed successfully." ~/project/backend/migrations_dump.txt
-              then
-                ~/project/temp/migrations_dump.txt
-            fi
+      #- run:
+      #    name: Send migration results to file as memstash not available
+      #    command: |
+      #      if grep -q "has been executed successfully." ~/project/backend/migrations_dump.txt
+      #        then
+      #          ~/project/temp/migrations_dump.txt
+      #      fi
 #              curl -H "Content-Type: text/plain" -H "token: 7933fe63-4687-4fa1-8426-aa25aa1730ec" --request PUT --data "1" https://api.memstash.io/values/migration_${CIRCLE_WORKFLOW_ID:0:7}
 #            fi
       
       - persist_to_workspace:
             root: ~/
             paths:
-              - project/.circleci/temp/migration_output.txt 
+              - project/.circleci/temp/migration_dump.txt 
 
       - destroy-environment:
           workflow_id: "${CIRCLE_WORKFLOW_ID:0:7}"
