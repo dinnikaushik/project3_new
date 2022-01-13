@@ -7,7 +7,8 @@ commands:
   destroy-environment:
     description: Destroy back-end and front-end cloudformation stacks given a workflow ID.
     parameters:
-      # Add parameter here   
+      workflow_id:
+        type: string  
     steps:
       - run:
           name: Destroy environments
@@ -15,7 +16,7 @@ commands:
           command: |
             aws cloudformation delete-stack --stack-name "udapeople-frontend-${CIRCLE_WORKFLOW_ID:0:7}"
             aws cloudformation delete-stack --stack-name "udapeople-backend-${CIRCLE_WORKFLOW_ID:0:7}"
-            exit 1
+#            exit 1
 
 jobs:
   build-frontend:
@@ -141,12 +142,17 @@ jobs:
     docker:
       - image: amazon/aws-cli
     steps:
+      - run:
+          name: SSH or Git CLI client 
+          command: |
+            yum install -y openssh-client git
+            
       - checkout 
       - run:
           name: Install Tar & gzip
           command: |
-            apt-get install tar
-            apt-get install gzip 
+            yum install -y tar gzip
+          
       - run:
           name: Ensure back-end infrastructure exists
           command: |
@@ -169,21 +175,126 @@ jobs:
           #  exit 1
       - run:
           name: Add back-end ip to ansible inventory
-          command: |
-            cd .circleci/ansible
-            touch inventory.txt
-            echo [all] > inventory.txt
+          command:  |
+            echo [web] > .circleci/ansible/inventory.txt
+            echo [web] > .circleci/ansible/temp.txt
             aws ec2 describe-instances \
             --query 'Reservations[*].Instances[*].PublicIpAddress' \
-            --filters "Name=tags:project,Values=udapeople" \
-            --output text >> inventory.txt
-
+            --filters "Name=tag:project,Values=udapeople" \
+            --output text >> .circleci/ansible/temp.txt 
+            cp .circleci/ansible/temp.txt .circleci/ansible/inventory.txt
+            cat .circleci/ansible/temp.txt
+            cat .circleci/ansible/inventory.txt
           #  exit 1
       - persist_to_workspace:
           root: ~/
           paths:
             - project/.circleci/ansible/inventory.txt
       # Here's where you will add some code to rollback on failure      
+
+  configure-infrastructure:
+    docker:
+      - image: python:3.7-alpine3.11 
+    steps:
+      - run:
+          name: SSH or Git CLI client 
+          command: |
+            apk add --update openssh-client git
+
+      - checkout
+      - add_ssh_keys:
+              fingerprints: ["65:96:d4:ae:5b:21:65:7e:57:d7:e6:ef:52:1b:4b:ec"] 
+      # attach workspace
+
+
+      - attach_workspace:
+          at: ~/
+         
+      - run:
+          name: Install dependencies
+          command: |
+                apk add --no-cache \
+                python3 \
+                py3-pip \
+                && pip3 install --upgrade pip \
+                && pip3 install \
+                awscli \
+                && rm -rf /var/cache/apk/*
+                apk add --update ansible
+          #  exit 1
+      - run:
+          name: Configure server
+          command: |
+            cd .circleci/ansible/  
+            cat inventory.txt
+            ansible-playbook -i inventory.txt configure-server.yml --ssh-common-args='-o StrictHostKeyChecking=no'
+          #  exit 1
+      # Here's where you will add some code to rollback on failure   
+  run-migrations:
+    docker:
+      # Docker image here that supports NodeJS
+      - image: circleci/node:13.8.0
+
+    steps:
+      - checkout 
+      - restore_cache:
+          paths: [backend/node_modules]
+          key: backend-build
+      
+      - run:
+            name: enviroments
+            
+            command: |
+              cd  backend
+              touch .env
+              echo ENVIROMENT=production > .env
+              echo NODE_ENV=production >> ".env"
+              echo TYPEORM_CONNECTION=postgres >> .env
+              echo TYPEORM_MIGRATIONS_DIR=./src/migrations >> .env
+              echo TYPEORM_ENTITIES=./src/modules/domain/**/*.entity.ts >> .env
+              echo TYPEORM_MIGRATIONS=./src/migrations/*.ts >> .env
+              echo TYPEORM_HOST=udapeople-prod.crrqx4crzgoz.us-east-1.rds.amazonaws.com >> .env
+              echo TYPEORM_PORT=5432 >> .env
+              echo TYPEORM_USERNAME=postgres >> .env
+              echo TYPEORM_PASSWORD=udapeople123 >> .env
+              echo TYPEORM_DATABASE=postgres >> .env
+              ls -latr
+              cat .env
+      
+      - attach_workspace:
+            at: ~/
+      # Checkout code from git
+      - run:
+          name: Run migrations
+          command: |
+            cd backend
+            npm install
+            npm audit fix
+            npm run migrations > migrations_dump.txt
+            cat migrations_dump.txt
+          no_output_timeout: 30m 
+          # Your code here
+          #  exit 1
+      #- run:
+      #    name: Send migration results to file as memstash not available
+      #    command: |
+      #      if grep -q "has been executed successfully." ~/project/backend/migrations_dump.txt
+      #        then
+      #          ~/project/temp/migrations_dump.txt
+      #      fi
+#              curl -H "Content-Type: text/plain" -H "token: 7933fe63-4687-4fa1-8426-aa25aa1730ec" --request PUT --data "1" https://api.memstash.io/values/migration_${CIRCLE_WORKFLOW_ID:0:7}
+#            fi
+      
+      - persist_to_workspace:
+            root: ~/
+            paths:
+              - project/.circleci/temp/migration_dump.txt 
+
+      - destroy-environment:
+          workflow_id: "${CIRCLE_WORKFLOW_ID:0:7}"
+          # Your code here
+#            exit 1
+     # Here's where you will add some code to rollback on failure      
 
 
 
@@ -207,3 +318,7 @@ workflows:
           filters:
             branches:
               only: [master]    
+      - configure-infrastructure:
+          requires: [deploy-infrastructure]
+      - run-migrations:
+          requires: [configure-infrastructure]
