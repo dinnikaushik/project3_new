@@ -327,8 +327,8 @@ jobs:
             --output text)
             export API_URL="http://${BACKEND_IP}:3030"
             echo "API_URL = ${API_URL}"
-            echo API_URL="http://${BACKEND_IP}:3030" > frontend/.env
-            cat frontend/.env
+#            echo API_URL="http://${BACKEND_IP}:3030" > frontend/.env
+#            cat frontend/.env
           # your code here
 #           export API_URL="http://${BACKEND_IP}:3030"
 #            echo "${API_URL}"
@@ -338,7 +338,7 @@ jobs:
             cd frontend
             npm install
             npm run build
-            echo "checking for creation of the dist folder"
+            echo "checking dist folder"
             ls -la
             ls -la ./dist
             tar -czvf artifact-"${CIRCLE_WORKFLOW_ID:0:7}".tar.gz dist
