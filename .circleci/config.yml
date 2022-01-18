@@ -327,6 +327,8 @@ jobs:
             --output text)
             export API_URL="http://${BACKEND_IP}:3030"
             echo "API_URL = ${API_URL}"
+            ls -la
+            ls
             cd frontend
             npm install
             npm run build 
