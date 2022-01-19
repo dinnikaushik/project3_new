@@ -330,13 +330,6 @@ jobs:
             echo "API_URL = ${API_URL}"
             echo API_URL="http://${BACKEND_IP}:3030" >> frontend/.env
             cat frontend/.env
-            cd frontend
-            npm install
-            npm run build 
-            echo "checking for creation of the dist folder"
-            ls -la
-            ls -la ./dist
-
           # your code here
 #           export API_URL="http://${BACKEND_IP}:3030"
 #            echo "${API_URL}"
@@ -344,6 +337,8 @@ jobs:
           name: Deploy frontend objects
           command: |
             cd frontend
+            npm install
+            npm run build 
             tar -czvf artifact-"${CIRCLE_WORKFLOW_ID:0:7}".tar.gz dist
             aws s3 cp dist s3://udapeople-${CIRCLE_WORKFLOW_ID:0:7} --recursive
         # your code here
