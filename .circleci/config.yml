@@ -309,6 +309,7 @@ jobs:
       # Docker image here that supports AWS CLI
       - image: circleci/node:13.8.0
     steps:
+      - checkout
       # Checkout code from git
       - run:
           name: Install dependencies
@@ -327,8 +328,8 @@ jobs:
             --output text)
             export API_URL="http://${BACKEND_IP}:3030"
             echo "API_URL = ${API_URL}"
-            echo API_URL="http://${BACKEND_IP}:3030" >> .env
-            cat .env
+            echo API_URL="http://${BACKEND_IP}:3030" >> frontend/.env
+            cat frontend/.env
             npm install
             npm run build 
             echo "checking for creation of the dist folder"
@@ -341,6 +342,7 @@ jobs:
       - run:
           name: Deploy frontend objects
           command: |
+            cd frontend
             tar -czvf artifact-"${CIRCLE_WORKFLOW_ID:0:7}".tar.gz dist
             aws s3 cp dist s3://udapeople-${CIRCLE_WORKFLOW_ID:0:7} --recursive
         # your code here
