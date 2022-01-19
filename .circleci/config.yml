@@ -327,24 +327,20 @@ jobs:
             --output text)
             export API_URL="http://${BACKEND_IP}:3030"
             echo "API_URL = ${API_URL}"
-            ls -la
-            cd project
-            ls
-            cd frontend
+            echo API_URL="http://${BACKEND_IP}:3030" >> .env
+            cat .env
             npm install
             npm run build 
             echo "checking for creation of the dist folder"
             ls -la
             ls -la ./dist
-#            echo API_URL="http://${BACKEND_IP}:3030" > frontend/.env
-#            cat frontend/.env
+
           # your code here
 #           export API_URL="http://${BACKEND_IP}:3030"
 #            echo "${API_URL}"
       - run:
           name: Deploy frontend objects
           command: |
-            cd frontend
             tar -czvf artifact-"${CIRCLE_WORKFLOW_ID:0:7}".tar.gz dist
             aws s3 cp dist s3://udapeople-${CIRCLE_WORKFLOW_ID:0:7} --recursive
         # your code here
@@ -352,7 +348,7 @@ jobs:
       - persist_to_workspace:
             root: .
             paths:
-              - frontend/dist
+              - ./dist
 
       - destroy-environment:
           workflow_id: "${CIRCLE_WORKFLOW_ID:0:7}"
