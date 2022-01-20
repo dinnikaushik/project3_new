@@ -20,10 +20,30 @@ commands:
           name: Destroy environments
           when: on_fail
           command: |
+            echo "Destroying environment: ${CIRCLE_WORKFLOW_ID}"  
             aws cloudformation delete-stack --stack-name "udapeople-frontend-${CIRCLE_WORKFLOW_ID:0:7}"
             aws cloudformation delete-stack --stack-name "udapeople-backend-${CIRCLE_WORKFLOW_ID:0:7}"
 #            exit 1
-
+  revert-migrations:
+    description: Revert the last migration
+    parameters:
+      workflow_id:
+        type: string      
+    steps:
+      - run:
+          name: Revert migrations
+          when: on_fail
+          command: |
+            # Your Memstash or kvdb.io GET URL code goes here
+            # Example: kvdb.io
+            SUCCESS=$(curl --insecure  https://kvdb.io/CYySo2NxGrRN8STcUtj375/migration_${CIRCLE_WORKFLOW_ID:0:7})
+            # Logic for reverting the database state
+            if (( $SUCCESS == 1 ));
+            then
+                cd ~/project/backend
+                npm install
+                npm run migration:revert
+            fi  
 jobs:
   build-frontend:
     docker:
@@ -491,7 +511,11 @@ jobs:
               fi
             # your code here
       # Here's where you will add some code to rollback on failure  
+      - destroy-environment:
+          workflow_id: "${CIRCLE_WORKFLOW_ID:0:7}"
 
+      - revert-migrations:
+          workflow_id: "${CIRCLE_WORKFLOW_ID:0:7}"  
 
 workflows:
   default:
