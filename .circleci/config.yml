@@ -460,15 +460,22 @@ jobs:
             export API_URL="http://${BACKEND_IP}:3030"
             echo "API_URL = ${API_URL}"
 
-      - run:
-          name: Backend smoke test.
-          command: |
             if curl "${API_URL}/api/status" | grep "ok"
             then
               return 0
             else
               return 1
             fi
+
+#      - run:
+#          name: Backend smoke test.
+#          command: |
+#            if curl "${API_URL}/api/status" | grep "ok"
+#            then
+#              return 0
+#            else
+#              return 1
+#            fi
 
         # your code here
       - run:
@@ -484,8 +491,6 @@ jobs:
               fi
             # your code here
       # Here's where you will add some code to rollback on failure  
-      - destroy-environment:
-          workflow_id: "${CIRCLE_WORKFLOW_ID:0:7}"
 
 
 workflows:
