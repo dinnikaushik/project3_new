@@ -524,13 +524,13 @@ jobs:
     steps:
       - checkout 
       # Checkout code from git
-      - attach_workspace:
-          at: ~/
-
       - run:
           name: Install dependencies
           command: |
             yum install -y tar gzip
+
+      - attach_workspace:
+          at: ~/
 
       - run:
           name: Update cloudfront distribution
