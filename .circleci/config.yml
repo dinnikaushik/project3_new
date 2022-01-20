@@ -370,7 +370,9 @@ jobs:
       # Add ssh keys with fingerprint
       - attach_workspace:
           at: ~/
-         
+      - restore_cache:
+          keys: [backend-build]
+
       - run:
           name: Install dependencies
           command: |
@@ -395,13 +397,30 @@ jobs:
           command: |
             cd backend
             npm i
+            npm install typescript --save-dev
             npm run build
+            mv node_modules dist
+            echo NODE_ENV=production >> "dist/.env"
+            echo ENVIRONMENT=production >> "dist/.env"
+            echo VERSION=1 >> "dist/.env"
+            echo TYPEORM_CONNECTION=postgres >> "dist/.env"
+            echo TYPEORM_MIGRATIONS_DIR=./src/migrations >> "dist/.env"
+            echo TYPEORM_ENTITIES=./modules/domain/**/*.entity.js >> "dist/.env"
+            echo TYPEORM_MIGRATIONS=./migrations/*.js >> "dist/.env"
+            echo TYPEORM_HOST=$TYPEORM_HOST >> "dist/.env"
+            echo TYPEORM_PORT=$TYPEORM_PORT >> "dist/.env"
+            echo TYPEORM_USERNAME=$TYPEORM_USERNAME >> "dist/.env"
+            echo TYPEORM_PASSWORD=$TYPEORM_PASSWORD >> "dist/.env"
+            echo TYPEORM_DATABASE=$TYPEORM_DATABASE >> "dist/.env" 
+            echo NODE_PATH=/home/ubuntu/dist/node_modules >> "dist/.env"
+            tar -czvf artefacts.tar.gz ./dist
             cd ..
-            tar -C backend -czvf artifact.tar.gz .
             cd .circleci/ansible
             echo "Contents  of the inventory.txt file is -------"
             cat inventory.txt
             ansible-playbook -i inventory.txt deploy-backend.yml
+#            tar -C backend -czvf artifact.tar.gz .
+
       # your code here
       # Here's where you will add some code to rollback on failure  
       - destroy-environment:
