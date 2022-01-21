@@ -367,7 +367,7 @@ jobs:
             npm run build 
             aws s3 cp dist s3://udapeople-${CIRCLE_WORKFLOW_ID:0:7} --recursive
             URL02=("http://udapeople-${CIRCLE_WORKFLOW_ID:0:7}.s3-website-us-east-1.amazonaws.com")
-            echo URL02
+            echo URL02 "${URL02}"
         # your code here
       # Here's where you will add some code to rollback on failure    
       - persist_to_workspace:
@@ -560,7 +560,53 @@ jobs:
 
       - revert-migrations:
           workflow_id: "${CIRCLE_WORKFLOW_ID:0:7}"  
+cleanup:
+    docker:
+    - image: amazon/aws-cli
+  # Docker image here that supports AWS CLI
+    steps:
+      - checkout 
+      # Checkout code from git
+      - run:
+          name: Install dependencies
+          command: |
+            yum install -y tar gzip
 
+      - attach_workspace:
+          at: ~/
+
+      - run:
+          name: Get old stack workflow id
+          command: |
+            export OldworkflowID=$(aws cloudformation \
+            list-exports --query "Exports[?Name==\`WorkflowID\`].Value" --output text)
+
+            echo OldWorkflowID: "${OldWorkflowID}"
+            echo CIRCLE_WORKFLOW_ID: "${CIRCLE_WORKFLOW_ID:0:7}"
+            # your code here
+
+            export STACKS=($(aws cloudformation list-stacks --query "StackSummaries[*].StackName" \
+            --stack-status-filter CREATE_COMPLETE --output text)) 
+            echo Stack names: "${STACKS[@]}"          
+#            export OldWorkflowID="the id here"
+#            export STACKS=[] #put the list of stacks here
+      - run:
+          name: Remove old stacks and files
+          command: |
+            if [[ "${STACKS[@]}" =~ "${OldWorkflowID}" ]]
+            then
+              aws s3 rm "s3://udapeople-${oldworkflowID}" --recursive
+              aws cloudformation delete-stack --stack-name "udapeople-frontend-${oldworkflowID}"
+              aws cloudformation delete-stack --stack-name "udapeople-backend-${oldworkflowID}"
+            else
+              echo "All Good"
+            fi
+      - destroy-environment:
+          workflow_id: "${CIRCLE_WORKFLOW_ID:0:7}"
+
+      - revert-migrations:
+          workflow_id: "${CIRCLE_WORKFLOW_ID:0:7}"  
+          
 workflows:
   default:
     jobs:
@@ -593,3 +639,5 @@ workflows:
           requires: [deploy-backend, deploy-frontend]
       - cloudfront-update:
           requires: [smoke-test]
+      - cleanup:
+          requires: [cloudfront-update]
