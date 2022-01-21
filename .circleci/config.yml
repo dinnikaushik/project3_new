@@ -581,7 +581,6 @@ jobs:
             export OldworkflowID=$(<~/OldworkflowID.txt)
             echo "OldworkflowID : ${OldworkflowID}"
 
-            echo OldWorkflowID: "${OldWorkflowID}"
             echo CIRCLE_WORKFLOW_ID: "${CIRCLE_WORKFLOW_ID:0:7}"
  
             export STACKS=($(aws cloudformation list-stacks --query "StackSummaries[*].StackName" \
@@ -592,13 +591,7 @@ jobs:
       - run:
           name: Remove old stacks and files
           command: |
-            if [[ "${STACKS[@]}" =~ "${OldWorkflowID}" ]]
-            then
               aws s3 rm "s3://${OldworkflowID}" --recursive
-              aws cloudformation delete-stack --stack-name "udapeople-frontend-${oldworkflowID}"
-            else
-              echo "All Good"
-            fi
 
 workflows:
   default:
