@@ -591,6 +591,7 @@ jobs:
       - run:
           name: Remove old stacks and files
           command: |
+              export OldworkflowID=$(<~/OldworkflowID.txt)
               aws s3 rm "s3://${OldworkflowID}" --recursive
 
 workflows:
