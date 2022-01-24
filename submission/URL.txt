@@ -2,7 +2,7 @@ Provide a URL to your public GitHub repository. [URL01]
 	https://github.com/abhishek-raghav08/cdond-c3-projectstarter.git
 
 Provide the public URL for your S3 Bucket (aka, your front-end). [URL02] 
-	http://udapeople-58ed8b9.s3-website-us-east-1.amazonaws.com
+	http://udapeople-ace0900.s3-website-us-east-1.amazonaws.com
 
 Dear reviewer: to bring into your notice:
 
