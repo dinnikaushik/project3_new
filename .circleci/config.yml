@@ -609,7 +609,7 @@ workflows:
           requires: [build-frontend]
           context: CircleCI
       - deploy-infrastructure:
-          requires: [test-frontend, test-backend, scan-frontend, scan-backend]
+          requires: [test-frontend, test-backend]
           filters:
             branches:
               only: [master]    
