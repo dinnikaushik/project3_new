@@ -1,7 +1,7 @@
 version: 2.1
 
-orbs: 
-  slack: circleci/slack@4.5.1
+orbs:
+  aws-cli: circleci/aws-cli@2.0.3
 
 commands:
   destroy-environment:
@@ -609,7 +609,7 @@ workflows:
           requires: [build-frontend]
           context: CircleCI
       - deploy-infrastructure:
-          requires: [test-frontend, test-backend]
+          requires: [build-frontend]
           filters:
             branches:
               only: [master]    
