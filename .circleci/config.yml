@@ -51,13 +51,7 @@ jobs:
     steps:
       - checkout
       - restore_cache:
-          
-          
-          
-          
-          
-          
-          s: [frontend-build]
+          keys: [frontend-build]
       - run:
           name: Build front-end
           command: |
