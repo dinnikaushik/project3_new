@@ -51,7 +51,13 @@ jobs:
     steps:
       - checkout
       - restore_cache:
-          keys: [frontend-build]
+          
+          
+          
+          
+          
+          
+          s: [frontend-build]
       - run:
           name: Build front-end
           command: |
@@ -234,7 +240,7 @@ jobs:
 
       - checkout
       - add_ssh_keys:
-              fingerprints: ["65:96:d4:ae:5b:21:65:7e:57:d7:e6:ef:52:1b:4b:ec"] 
+              fingerprints: ["32:3d:50:75:a6:18:19:3b:ae:a7:e3:f9:f3:61:31:84"] 
       # attach workspace
 
 
@@ -386,7 +392,7 @@ jobs:
       - checkout 
       # Checkout code from git
       - add_ssh_keys:
-              fingerprints: ["65:96:d4:ae:5b:21:65:7e:57:d7:e6:ef:52:1b:4b:ec"] 
+              fingerprints: ["32:3d:50:75:a6:18:19:3b:ae:a7:e3:f9:f3:61:31:84"] 
       
       # Add ssh keys with fingerprint
       - attach_workspace:
